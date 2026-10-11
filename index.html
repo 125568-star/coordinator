@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ground Support Crew Portal</title>
+<style>
+:root{--blue:#1f5fae;--blue-d:#174a8a;--panel:#e6edf8;--bg:#fff;--text:#1d2733;--muted:#5b6b7d;--line:#cfd9e8;--orange:#d9822b;--card:#fff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--blue:#5b97e6;--blue-d:#3f7fd1;--panel:#1b2a40;--bg:#0f1722;--text:#e6ecf5;--muted:#9fb0c5;--line:#2a3b55;--card:#142033}}
+:root[data-theme="dark"]{--blue:#5b97e6;--blue-d:#3f7fd1;--panel:#1b2a40;--bg:#0f1722;--text:#e6ecf5;--muted:#9fb0c5;--line:#2a3b55;--card:#142033}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 Helvetica,Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column}
+main{flex:1;width:100%;max-width:880px;margin:0 auto;padding:32px 20px}
+.label{color:var(--orange);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+h1{margin:4px 0 2px;font-size:32px;color:var(--blue);line-height:1.15}
+h2{color:var(--blue);margin:28px 0 10px;font-size:20px}
+.sub{color:var(--blue);margin:0 0 20px}
+.callout{background:var(--panel);border-left:4px solid var(--blue);padding:14px 16px;margin:16px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px}
+.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:18px 0}
+.box{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:8px 14px;font-weight:700;font-size:14px;text-align:center}
+.box.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.arrow{color:var(--blue);font-weight:700}
+label{display:block;font-size:13px;font-weight:700;margin:12px 0 4px}
+input,select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font:inherit}
+button{background:var(--blue);color:#fff;border:0;border-radius:8px;padding:10px 18px;font:inherit;font-weight:700;cursor:pointer}
+button:hover{background:var(--blue-d)}
+button.ghost{background:transparent;color:var(--blue);border:1px solid var(--blue)}
+.roles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.role{border:2px solid var(--line);border-radius:8px;padding:10px;text-align:center;cursor:pointer;font-weight:700;font-size:14px;background:var(--card)}
+.role.sel{border-color:var(--blue);background:var(--panel);color:var(--blue)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.tabs{display:flex;gap:8px;margin-bottom:6px}
+.tabs button{background:var(--panel);color:var(--blue)}
+.tabs button.on{background:var(--blue);color:#fff}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;color:var(--blue);border-bottom:2px solid var(--blue);padding:8px}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+.wrap{overflow-x:auto}
+.err{color:#c0392b;font-weight:700;font-size:14px;margin-top:10px}
+.muted{color:var(--muted);font-size:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.grid2,.roles{grid-template-columns:1fr}}
+footer{background:var(--blue);color:#fff;text-align:center;font-size:12px;font-weight:700;padding:10px 12px}
+.narrow{max-width:440px;margin:0 auto}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<footer>Ground Support Crew | groundsupportcrew.com</footer>
+<script>
+var SUPABASE_URL='https://pulbcpjwxliwnmkiyfhe.supabase.co';
+var SUPABASE_KEY='sb_publishable_ljmRZCY1QvS4G64eDgTuUQ_GfWXky0x';
+var sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+var view='login',role='client',err='',note='',tab='clients',me=null,data={profiles:[],appts:[]};
+var NAMES={coordinator:'Coordinator',client:'Client',family:'Family of client'};
+var $=function(id){return document.getElementById(id)};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
+function flow(a){return '<div class="flow"><div class="box '+(a==='client'?'on':'')+'">Client</div><span class="arrow">&#8594;</span><div class="box '+(a==='coordinator'?'on':'')+'">Coordinator</div><span class="arrow">&#8594;</span><div class="box '+(a==='family'?'on':'')+'">Family</div></div>'}
+function authView(){
+  var s=view==='signup';
+  return '<div class="narrow"><div class="label">Portal</div><h1>'+(s?'Create your account':'Welcome back')+'</h1><p class="sub">'+(s?'Choose who you are, then sign up.':'Log in as a coordinator, client or family member.')+'</p>'+flow('')+'<div class="card">'+
+  (s?'<label>I am a</label><div class="roles">'+['coordinator','client','family'].map(function(r){return '<div class="role '+(role===r?'sel':'')+'" onclick="setRole(\''+r+'\')">'+NAMES[r]+'</div>'}).join('')+'</div><label>Full name</label><input id="name" autocomplete="name">':'')+
+  '<label>Email</label><input id="email" type="email" autocomplete="email"><label>Password</label><input id="pw" type="password" autocomplete="'+(s?'new-password':'current-password')+'">'+
+  (s&&role==='family'?'<label>Client\'s email</label><input id="link" type="email" placeholder="The client must already have an account">':'')+
+  (err?'<div class="err">'+esc(err)+'</div>':'')+(note?'<div class="callout">'+esc(note)+'</div>':'')+
+  '<div class="row" style="margin-top:16px"><button onclick="'+(s?'doSignup()':'doLogin()')+'">'+(s?'Sign up':'Log in')+'</button><button class="ghost" onclick="go(\''+(s?'login':'signup')+'\')">'+(s?'I have an account':'Create account')+'</button></div></div></div>';
+}
+function setRole(r){role=r;err='';render()}
+function go(v){view=v;err='';note='';render()}
+async function doSignup(){
+  var name=$('name').value.trim(),email=$('email').value.trim(),pw=$('pw').value,link=$('link')?$('link').value.trim():'';
+  if(!name||!email||pw.length<6){err='Enter your name, an email and a password of 6+ characters.';return render()}
+  if(role==='family'&&!link){err="Enter your client's email.";return render()}
+  var r=await sb.auth.signUp({email:email,password:pw,options:{data:{full_name:name,role:role,client_email:link}}});
+  if(r.error){err=r.error.message.indexOf('Database error')>-1?'No client account found with that email.':r.error.message;return render()}
+  err='';
+  if(!r.data.session){note='Check your email to confirm your account, then log in.';view='login'}
+  render();
+}
+async function doLogin(){
+  var r=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('pw').value});
+  if(r.error){err='Email or password is incorrect.';return render()}
+  err='';
+}
+async function logout(){await sb.auth.signOut();me=null;view='login';render()}
+async function refresh(){
+  var u=(await sb.auth.getUser()).data.user;
+  if(!u){me=null;return render()}
+  var p=await sb.from('profiles').select('*').eq('id',u.id).single();
+  me=p.data;
+  if(me&&me.approved){
+    var ps=await sb.from('profiles').select('*').order('full_name');
+    var as=await sb.from('appointments').select('*').order('appt_date');
+    data.profiles=ps.data||[];data.appts=as.data||[];
+  }
+  render();
+}
+async function addAppt(){
+  var c=$('ac').value,t=$('at').value.trim(),d=$('ad').value;
+  if(!c||!t||!d)return;
+  var r=await sb.from('appointments').insert({client_id:c,title:t,appt_date:d,created_by:me.id});
+  if(r.error){err=r.error.message}
+  await refresh();
+}
+async function delAppt(id){await sb.from('appointments').delete().eq('id',id);refresh()}
+async function approve(id){var r=await sb.rpc('approve_family',{family_id:id});if(r.error)err=r.error.message;refresh()}
+function nameOf(id){var p=data.profiles.find(function(x){return x.id===id});return p?p.full_name:''}
+function apptRows(list,canDel){
+  if(!list.length)return '<p class="muted">Nothing scheduled yet.</p>';
+  return '<div class="wrap"><table><tr><th>Date</th>'+(canDel?'<th>Client</th>':'')+'<th>What</th>'+(canDel?'<th></th>':'')+'</tr>'+list.map(function(a){return '<tr><td>'+esc(a.appt_date)+'</td>'+(canDel?'<td>'+esc(nameOf(a.client_id))+'</td>':'')+'<td>'+esc(a.title)+'</td>'+(canDel?'<td><button class="ghost" onclick="delAppt(\''+a.id+'\')">Remove</button></td>':'')+'</tr>'}).join('')+'</table></div>';
+}
+function famList(fam,canApprove){
+  if(!fam.length)return '<p class="muted">No family members linked yet. They can sign up with the Family role and the client\'s email.</p>';
+  return '<div class="wrap"><table><tr><th>Name</th><th>Email</th><th>Status</th></tr>'+fam.map(function(f){return '<tr><td>'+esc(f.full_name)+'</td><td>'+esc(f.email)+'</td><td>'+(f.approved?'Approved':(canApprove?'<button onclick="approve(\''+f.id+'\')">Approve</button>':'Pending'))+'</td></tr>'}).join('')+'</table></div>';
+}
+function dash(){
+  var h='<div class="row"><div><div class="label">'+NAMES[me.role]+'</div><h1>Hello, '+esc(me.full_name.split(' ')[0])+'</h1></div><button class="ghost" onclick="logout()">Log out</button></div>'+flow(me.role);
+  if(!me.approved){
+    return h+'<div class="callout"><b>Waiting for approval.</b><br>'+(me.role==='coordinator'?'Your coordinator account needs to be approved by the account owner before you can see any data.':'Your client or a coordinator needs to approve your access before you can see anything.')+'</div>';
+  }
+  if(err)h+='<div class="err">'+esc(err)+'</div>';
+  if(me.role==='coordinator'){
+    var cl=data.profiles.filter(function(x){return x.role==='client'}),fam=data.profiles.filter(function(x){return x.role==='family'});
+    h+='<div class="tabs"><button class="'+(tab==='clients'?'on':'')+'" onclick="tab=\'clients\';render()">Clients</button><button class="'+(tab==='sched'?'on':'')+'" onclick="tab=\'sched\';render()">Schedule</button></div>';
+    if(tab==='clients'){
+      h+='<h2>Your clients</h2>'+(cl.length?'<div class="wrap"><table><tr><th>Client</th><th>Email</th><th>Family</th></tr>'+cl.map(function(c){var f=fam.filter(function(x){return x.linked_client===c.id}).map(function(x){return esc(x.full_name)+(x.approved?'':' (pending)')}).join(', ')||'<span class="muted">None linked</span>';return '<tr><td>'+esc(c.full_name)+'</td><td>'+esc(c.email)+'</td><td>'+f+'</td></tr>'}).join('')+'</table></div>':'<div class="callout">No clients yet. Ask clients to sign up with the Client role.</div>')+
+      '<h2>Family access</h2>'+famList(fam,true);
+    }else{
+      h+='<h2>Add to the schedule</h2><div class="card">'+(cl.length?'<div class="grid2"><div><label>Client</label><select id="ac">'+cl.map(function(c){return '<option value="'+c.id+'">'+esc(c.full_name)+'</option>'}).join('')+'</select></div><div><label>Date</label><input id="ad" type="date"></div></div><label>What</label><input id="at" placeholder="e.g. Plan review meeting"><div style="margin-top:14px"><button onclick="addAppt()">Add</button></div>':'<p class="muted">Add a client first.</p>')+'</div><h2>All appointments</h2>'+apptRows(data.appts,true);
+    }
+  }else if(me.role==='client'){
+    h+='<h2>Your upcoming appointments</h2>'+apptRows(data.appts,false)+'<h2>Family with access</h2>'+famList(data.profiles.filter(function(x){return x.role==='family'}),true);
+  }else{
+    var c=data.profiles.find(function(x){return x.id===me.linked_client});
+    h+='<h2>'+(c?esc(c.full_name)+'\'s upcoming appointments':'Appointments')+'</h2>'+apptRows(data.appts,false);
+  }
+  return h;
+}
+function render(){$('app').innerHTML=me?dash():authView()}
+sb.auth.onAuthStateChange(function(){setTimeout(refresh,0)});
+render();
+</script>
+</body>
+</html>
