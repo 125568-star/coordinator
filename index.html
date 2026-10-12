@@ -206,3 +206,261 @@ function refillStaff(){
 }
 function addAssign(){
   var c=val('asc'),co=val('asco'),sv=val('assv'),st=val('asst');
+  if(!c||!co||!sv){err='Choose a client, a company and the service (for example OT).';return render()}
+  act(sb.from('provider_assignments').insert({client_id:c,company_id:co,service:sv,staff_id:st||null}),'Provider assigned.');
+}
+function delAssign(id){if(confirm('Stop this provider assignment?'))act(sb.from('provider_assignments').delete().eq('id',id),'Assignment removed.')}
+function setStaff(id){
+  var v=val('st_'+id)||null;
+  if(isStaff())act(sb.from('provider_assignments').update({staff_id:v}).eq('id',id),'Staff member saved.');
+  else act(sb.rpc('assign_staff',{p_assignment:id,p_staff:v}),'Staff member saved.');
+}
+
+/* ---------- actions: suggestions and reviews ---------- */
+function suggestAdd(){
+  var c=val('sc'),d=val('sd'),t=val('st'),n=val('sn');
+  if(!c||!d||!t){err='Enter a date and what the appointment is.';return render()}
+  act(sb.from('change_requests').insert({client_id:c,action:'add',title:t,appt_date:d,note:n||null,company_id:isProv()?me.company_id:null}),'Suggestion sent. A coordinator will review it.');
+}
+function startSug(id){sugId=id;render()}
+function suggestEdit(id){
+  var a=apptById(id),d=val('sed'),t=val('set'),n=val('sen');
+  if(!a)return;
+  if(!d||!t){err='Enter a date and what the appointment is.';return render()}
+  act(sb.from('change_requests').insert({client_id:a.client_id,appointment_id:id,action:'edit',title:t,appt_date:d,note:n||null}),'Suggestion sent. A coordinator will review it.');
+}
+function suggestRemove(id){
+  var a=apptById(id);if(!a)return;
+  var n=prompt('Why should this appointment be removed? (optional)');
+  if(n===null)return;
+  act(sb.from('change_requests').insert({client_id:a.client_id,appointment_id:id,action:'remove',title:a.title,appt_date:a.appt_date,note:n||null}),'Suggestion sent. A coordinator will review it.');
+}
+function withdraw(id){act(sb.from('change_requests').delete().eq('id',id),'Suggestion withdrawn.')}
+function review(id,ok){
+  var n=null;
+  if(!ok){n=prompt('Reason for declining (optional):');if(n===null)return}
+  act(sb.rpc('review_change_request',{p_id:id,p_approve:ok,p_note:n||null}),ok?'Approved and applied to the schedule.':'Declined.');
+}
+
+/* ---------- shared pieces ---------- */
+function tabsBar(list){
+  return '<div class="tabs">'+list.map(function(t){return '<button class="'+(tab===t[0]?'on':'')+'" onclick="setTab(\''+t[0]+'\')">'+t[1]+(t[2]?'<span class="badge">'+t[2]+'</span>':'')+'</button>'}).join('')+'</div>';
+}
+function statusPill(p){return p.approved?'<span class="pill ok">Approved</span>':'<span class="pill warn">Waiting</span>'}
+function describe(r){
+  var a=r.appointment_id?apptById(r.appointment_id):null;
+  if(r.action==='add')return 'Add <b>'+esc(r.title)+'</b> on '+esc(fmt(r.appt_date));
+  if(r.action==='remove')return 'Remove <b>'+esc(a?a.title:r.title)+'</b> ('+esc(fmt(a?a.appt_date:r.appt_date))+')';
+  return 'Change '+(a?'<b>'+esc(a.title)+'</b> ('+esc(fmt(a.appt_date))+')':'an appointment')+' to <b>'+esc(r.title)+'</b> on '+esc(fmt(r.appt_date));
+}
+function statusOfReq(r){return r.status==='pending'?'<span class="pill warn">Waiting for review</span>':r.status==='approved'?'<span class="pill ok">Approved</span>':'<span class="pill no">Declined</span>'}
+
+function apptTable(list,mode){
+  var all=list.length;
+  var td=today();
+  if(!showPast)list=list.filter(function(a){return a.appt_date>=td});
+  var h='<div class="muted" style="margin:0 0 6px"><label class="check" style="margin:0"><input type="checkbox" '+(showPast?'checked':'')+' onchange="togglePast()"> Show past appointments</label></div>';
+  if(!list.length)return h+'<p class="muted">'+(all?'No upcoming appointments.':'Nothing scheduled yet.')+'</p>';
+  var showClient=isStaff()||isProv(),showCo=isStaff(),canAct=mode==='staff'||mode==='suggest';
+  h+='<div class="wrap"><table><tr><th>Date</th>'+(showClient?'<th>Client</th>':'')+'<th>What</th>'+(showCo?'<th>Provider</th>':'')+(canAct?'<th></th>':'')+'</tr>';
+  list.forEach(function(a){
+    var cols=1+(showClient?1:0)+1+(showCo?1:0)+(canAct?1:0);
+    if(mode==='staff'&&editId===a.id){
+      h+='<tr><td><input id="ed" type="date" value="'+esc(a.appt_date)+'"></td>'+(showClient?'<td>'+esc(nameOf(a.client_id))+'</td>':'')+'<td><input id="et" value="'+esc(a.title)+'"></td><td><select id="ep">'+opts(data.companies,a.company_id,function(c){return c.name},'No provider')+'</select></td><td><div class="acts"><button class="sm" onclick="saveAppt(\''+a.id+'\')">Save</button><button class="sm ghost" onclick="cancelEdit()">Cancel</button></div></td></tr>';
+    }else if(mode==='suggest'&&sugId===a.id){
+      h+='<tr><td><input id="sed" type="date" value="'+esc(a.appt_date)+'"></td>'+(showClient?'<td>'+esc(nameOf(a.client_id))+'</td>':'')+'<td><input id="set" value="'+esc(a.title)+'"><input id="sen" placeholder="Note for the coordinator (optional)" style="margin-top:6px"></td><td><div class="acts"><button class="sm" onclick="suggestEdit(\''+a.id+'\')">Send suggestion</button><button class="sm ghost" onclick="cancelEdit()">Cancel</button></div></td></tr>';
+    }else{
+      h+='<tr><td>'+esc(fmt(a.appt_date))+'</td>'+(showClient?'<td>'+esc(nameOf(a.client_id))+'</td>':'')+'<td>'+esc(a.title)+'</td>'+(showCo?'<td>'+esc(compName(a.company_id))+'</td>':'');
+      if(mode==='staff')h+='<td><div class="acts"><button class="sm ghost" onclick="startEdit(\''+a.id+'\')">Edit</button><button class="sm danger" onclick="delAppt(\''+a.id+'\')">Remove</button></div></td>';
+      else if(mode==='suggest')h+='<td><div class="acts"><button class="sm ghost" onclick="startSug(\''+a.id+'\')">Suggest a change</button><button class="sm danger" onclick="suggestRemove(\''+a.id+'\')">Suggest removal</button></div></td>';
+      h+='</tr>';
+    }
+  });
+  return h+'</table></div>';
+}
+
+function suggestForm(clients){
+  if(!clients.length)return '<div class="callout">No clients to suggest changes for yet.</div>';
+  var h='<div class="card"><div class="grid2">';
+  if(clients.length===1)h+='<div><label>Client</label><input value="'+esc(clients[0].full_name)+'" disabled><input id="sc" type="hidden" value="'+esc(clients[0].id)+'"></div>';
+  else h+='<div><label>Client</label><select id="sc">'+opts(clients,'',function(c){return c.full_name})+'</select></div>';
+  h+='<div><label>Date</label><input id="sd" type="date"></div></div><label>What</label><input id="st" placeholder="e.g. OT session"><label>Note for the coordinator (optional)</label><input id="sn"><div style="margin-top:14px"><button onclick="suggestAdd()">Send suggestion</button></div></div>';
+  return h;
+}
+
+function suggestionsList(list,title){
+  var h='<h2>'+title+'</h2>';
+  if(!list.length)return h+'<p class="muted">No suggestions yet.</p>';
+  h+='<div class="wrap"><table><tr><th>Sent</th><th>Suggestion</th><th>Status</th><th></th></tr>';
+  list.slice(0,20).forEach(function(r){
+    h+='<tr><td>'+esc(new Date(r.created_at).toLocaleDateString())+'</td><td>'+describe(r)+(r.note?'<div class="muted">Note: '+esc(r.note)+'</div>':'')+(r.review_note?'<div class="muted">Reply: '+esc(r.review_note)+'</div>':'')+'</td><td>'+statusOfReq(r)+'</td><td>'+(r.status==='pending'&&r.requested_by===me.id?'<button class="sm ghost" onclick="withdraw(\''+r.id+'\')">Withdraw</button>':'')+'</td></tr>';
+  });
+  return h+'</table></div>';
+}
+
+function familyTable(fam,canManage){
+  if(!fam.length)return '<p class="muted">No family members linked yet. They can sign up with the Family role and the client\'s email.</p>';
+  var h='<div class="wrap"><table><tr><th>Name</th><th>Email</th>'+(isStaff()?'<th>Client</th>':'')+'<th>Access</th><th>Representative</th>'+(canManage?'<th></th>':'')+'</tr>';
+  fam.forEach(function(f){
+    h+='<tr><td>'+esc(f.full_name)+'</td><td>'+esc(f.email)+'</td>'+(isStaff()?'<td>'+esc(nameOf(f.linked_client))+'</td>':'')+'<td>'+statusPill(f)+'</td><td>'+(f.is_representative?'<span class="pill ok">Yes</span>':'<span class="muted">View only</span>')+'</td>';
+    if(canManage)h+='<td><div class="acts">'+(f.approved?'<button class="sm ghost" onclick="setAccess(\''+f.id+'\',false)">Revoke</button>':'<button class="sm" onclick="setAccess(\''+f.id+'\',true)">Approve</button>')+(f.is_representative?'<button class="sm ghost" onclick="setRep(\''+f.id+'\',false)">Remove representative</button>':'<button class="sm ghost" onclick="setRep(\''+f.id+'\',true)">Make representative</button>')+'</div></td>';
+    h+='</tr>';
+  });
+  return h+'</table></div><p class="muted">A representative can suggest changes for the client. Other family members can only look.</p>';
+}
+
+/* ---------- coordinator and admin ---------- */
+function visibleToMe(p){return isAdmin()||(p.role!=='admin'&&p.role!=='coordinator')}
+function requestsView(){
+  var pend=data.reqs.filter(function(r){return r.status==='pending'});
+  var done=data.reqs.filter(function(r){return r.status!=='pending'}).slice(0,10);
+  var h='<h2>Waiting for review</h2>';
+  if(!pend.length)h+='<div class="callout">Nothing to review. Suggestions from clients, representatives and providers will appear here.</div>';
+  else{
+    h+='<div class="wrap"><table><tr><th>Client</th><th>From</th><th>Suggestion</th><th></th></tr>';
+    pend.forEach(function(r){
+      h+='<tr><td>'+esc(nameOf(r.client_id))+'</td><td>'+esc(r.requester_name||'Someone')+'<div class="muted">'+esc(NAMES[r.requester_role]||'')+'</div></td><td>'+describe(r)+(r.note?'<div class="muted">Note: '+esc(r.note)+'</div>':'')+'</td><td><div class="acts"><button class="sm" onclick="review(\''+r.id+'\',true)">Approve</button><button class="sm danger" onclick="review(\''+r.id+'\',false)">Decline</button></div></td></tr>';
+    });
+    h+='</table></div>';
+  }
+  if(done.length){
+    h+='<h2>Recently reviewed</h2><div class="wrap"><table><tr><th>Client</th><th>Suggestion</th><th>Result</th></tr>'+done.map(function(r){return '<tr><td>'+esc(nameOf(r.client_id))+'</td><td>'+describe(r)+'</td><td>'+statusOfReq(r)+(r.review_note?'<div class="muted">'+esc(r.review_note)+'</div>':'')+'</td></tr>'}).join('')+'</table></div>';
+  }
+  return h;
+}
+function schedView(){
+  var cl=clientsList();
+  var h='<h2>Add to the schedule</h2><div class="card">';
+  if(!cl.length)return h+'<p class="muted">Add a client first. Clients sign up with the Client role.</p></div><h2>All appointments</h2>'+apptTable(data.appts,'staff');
+  h+='<div class="grid2"><div><label>Client</label><select id="ac">'+opts(cl,'',function(c){return c.full_name})+'</select></div><div><label>Date</label><input id="ad" type="date"></div></div>';
+  h+='<div class="grid2"><div><label>What</label><input id="at" placeholder="e.g. Plan review meeting"></div><div><label>Provider (optional)</label><select id="ap">'+opts(data.companies,'',function(c){return c.name},'No provider')+'</select></div></div>';
+  h+='<div style="margin-top:14px"><button onclick="addAppt()">Add appointment</button></div></div><h2>All appointments</h2>'+apptTable(data.appts,'staff');
+  return h;
+}
+function clientsView(){
+  var cl=data.profiles.filter(function(x){return x.role==='client'}),fam=data.profiles.filter(function(x){return x.role==='family'});
+  var h='<h2>Clients</h2>';
+  if(!cl.length)h+='<div class="callout">No clients yet. Ask clients to sign up with the Client role.</div>';
+  else h+='<div class="wrap"><table><tr><th>Client</th><th>Email</th><th>Family</th><th>Providers</th></tr>'+cl.map(function(c){
+    var f=fam.filter(function(x){return x.linked_client===c.id}).map(function(x){return esc(x.full_name)+(x.is_representative?' (representative)':'')+(x.approved?'':' (waiting)')}).join(', ')||'<span class="muted">None linked</span>';
+    var p=data.assigns.filter(function(a){return a.client_id===c.id}).map(function(a){return esc(compName(a.company_id))+' ('+esc(a.service)+')'+(a.staff_id?' - '+esc(nameOf(a.staff_id)):'')}).join('<br>')||'<span class="muted">None</span>';
+    return '<tr><td>'+esc(c.full_name)+'</td><td>'+esc(c.email)+'</td><td>'+f+'</td><td>'+p+'</td></tr>';
+  }).join('')+'</table></div>';
+  return h+'<h2>Family access</h2>'+familyTable(fam,true);
+}
+function providersView(){
+  var cl=clientsList(),h='<h2>Provider companies</h2>';
+  if(!data.companies.length)h+='<div class="callout">No provider companies yet. Companies create their own account with the Provider company role.</div>';
+  else h+='<div class="wrap"><table><tr><th>Company</th><th>Company login</th><th>Staff</th></tr>'+data.companies.map(function(c){
+    var acc=data.profiles.filter(function(p){return p.role==='provider_company'&&p.company_id===c.id});
+    var st=data.profiles.filter(function(p){return p.role==='provider_staff'&&p.company_id===c.id});
+    return '<tr><td>'+esc(c.name)+'</td><td>'+(acc.map(function(p){return esc(p.email)+' '+statusPill(p)}).join('<br>')||'<span class="muted">None</span>')+'</td><td>'+(st.map(function(p){return esc(p.full_name)+' '+statusPill(p)}).join('<br>')||'<span class="muted">None</span>')+'</td></tr>';
+  }).join('')+'</table></div>';
+  h+='<h2>Assign a provider to a client</h2><div class="card">';
+  if(!cl.length||!data.companies.length)h+='<p class="muted">You need at least one client and one provider company first.</p>';
+  else{
+    var first=data.companies[0].id,st=data.profiles.filter(function(p){return p.role==='provider_staff'&&p.approved&&p.company_id===first});
+    h+='<div class="grid2"><div><label>Client</label><select id="asc">'+opts(cl,'',function(c){return c.full_name})+'</select></div><div><label>Company</label><select id="asco" onchange="refillStaff()">'+opts(data.companies,first,function(c){return c.name})+'</select></div></div>';
+    h+='<div class="grid2"><div><label>Service</label><input id="assv" placeholder="e.g. OT"></div><div><label>Staff member (optional)</label><select id="asst">'+opts(st,'',function(p){return p.full_name},'No named person yet')+'</select></div></div><div style="margin-top:14px"><button onclick="addAssign()">Assign provider</button></div>';
+  }
+  h+='</div><h2>Current assignments</h2>';
+  if(!data.assigns.length)return h+'<p class="muted">No assignments yet.</p>';
+  return h+'<div class="wrap"><table><tr><th>Client</th><th>Company</th><th>Service</th><th>Staff</th><th></th></tr>'+data.assigns.map(function(a){
+    var st=data.profiles.filter(function(p){return p.role==='provider_staff'&&p.approved&&p.company_id===a.company_id});
+    return '<tr><td>'+esc(nameOf(a.client_id))+'</td><td>'+esc(compName(a.company_id))+'</td><td>'+esc(a.service)+'</td><td><select id="st_'+a.id+'" onchange="setStaff(\''+a.id+'\')">'+opts(st,a.staff_id,function(p){return p.full_name},'No named person yet')+'</select></td><td><button class="sm danger" onclick="delAssign(\''+a.id+'\')">Remove</button></td></tr>';
+  }).join('')+'</table></div>';
+}
+function peopleView(){
+  var list=data.profiles.filter(visibleToMe).sort(function(a,b){return (a.approved-b.approved)||a.full_name.localeCompare(b.full_name)});
+  var h='<h2>Accounts</h2><p class="muted">'+(isAdmin()?'You can approve, revoke and edit every account.':'You can approve and revoke clients, family and providers.')+'</p><div class="wrap"><table><tr><th>Name</th><th>Email</th><th>Role</th><th>Linked to</th><th>Access</th><th></th></tr>';
+  list.forEach(function(p){
+    var link=p.role==='family'?nameOf(p.linked_client):compName(p.company_id);
+    if(isAdmin()&&editP===p.id){
+      h+='<tr><td><input id="pn" value="'+esc(p.full_name)+'"></td><td>'+esc(p.email)+'</td><td><select id="pr">'+Object.keys(NAMES).map(function(r){return '<option value="'+r+'"'+(r===p.role?' selected':'')+'>'+NAMES[r]+'</option>'}).join('')+'</select></td><td><select id="pc">'+opts(data.companies,p.company_id,function(c){return c.name},'No company')+'</select></td><td><select id="pa"><option value="yes"'+(p.approved?' selected':'')+'>Approved</option><option value="no"'+(p.approved?'':' selected')+'>Not approved</option></select></td><td><div class="acts"><button class="sm" onclick="saveP(\''+p.id+'\')">Save</button><button class="sm ghost" onclick="cancelEdit()">Cancel</button></div></td></tr>';
+      return;
+    }
+    h+='<tr><td>'+esc(p.full_name)+'</td><td>'+esc(p.email)+'</td><td>'+esc(NAMES[p.role]||p.role)+'</td><td>'+esc(link)+'</td><td>'+statusPill(p)+'</td><td>';
+    if(p.id===me.id)h+='<span class="muted">You</span>';
+    else{
+      h+='<div class="acts">'+(p.approved?'<button class="sm ghost" onclick="setAccess(\''+p.id+'\',false)">Revoke</button>':'<button class="sm" onclick="setAccess(\''+p.id+'\',true)">Approve</button>');
+      if(isAdmin())h+='<button class="sm ghost" onclick="startEditP(\''+p.id+'\')">Edit</button>';
+      h+='</div>';
+    }
+    h+='</td></tr>';
+  });
+  return h+'</table></div>';
+}
+function staffDash(){
+  var pend=data.reqs.filter(function(r){return r.status==='pending'}).length;
+  var wait=data.profiles.filter(function(p){return !p.approved&&visibleToMe(p)}).length;
+  var h=tabsBar([['requests','Requests',pend],['sched','Schedule'],['clients','Clients'],['providers','Providers'],['people','People',wait]]);
+  if(tab==='requests')return h+requestsView();
+  if(tab==='clients')return h+clientsView();
+  if(tab==='providers')return h+providersView();
+  if(tab==='people')return h+peopleView();
+  return h+schedView();
+}
+
+/* ---------- provider company ---------- */
+function companyDash(){
+  var h=tabsBar([['sched','Schedule'],['clients','Clients'],['staff','Staff']]);
+  var co=compName(me.company_id);
+  if(tab==='clients'){
+    h+='<h2>Clients you serve</h2>';
+    if(!data.assigns.length)return h+'<div class="callout">No clients are assigned to '+esc(co||'your company')+' yet. A coordinator assigns them.</div>';
+    var st=data.profiles.filter(function(p){return p.role==='provider_staff'&&p.approved&&p.company_id===me.company_id});
+    return h+'<div class="wrap"><table><tr><th>Client</th><th>Service</th><th>Staff member</th></tr>'+data.assigns.map(function(a){
+      return '<tr><td>'+esc(nameOf(a.client_id))+'</td><td>'+esc(a.service)+'</td><td><select id="st_'+a.id+'" onchange="setStaff(\''+a.id+'\')">'+opts(st,a.staff_id,function(p){return p.full_name},'No named person yet')+'</select></td></tr>';
+    }).join('')+'</table></div>';
+  }
+  if(tab==='staff'){
+    var staff=data.profiles.filter(function(p){return p.role==='provider_staff'});
+    h+='<h2>Your staff</h2>';
+    if(!staff.length)return h+'<p class="muted">No staff yet. They sign up with the Provider staff role and your company\'s email ('+esc(me.email)+').</p>';
+    return h+'<div class="wrap"><table><tr><th>Name</th><th>Email</th><th>Access</th><th></th></tr>'+staff.map(function(p){
+      return '<tr><td>'+esc(p.full_name)+'</td><td>'+esc(p.email)+'</td><td>'+statusPill(p)+'</td><td>'+(p.approved?'<button class="sm ghost" onclick="setAccess(\''+p.id+'\',false)">Revoke</button>':'<button class="sm" onclick="setAccess(\''+p.id+'\',true)">Approve</button>')+'</td></tr>';
+    }).join('')+'</table></div>';
+  }
+  var cl=data.profiles.filter(function(p){return p.role==='client'});
+  return h+'<h2>Your sessions</h2><p class="muted">These are the appointments tagged to '+esc(co||'your company')+'.</p>'+apptTable(data.appts,'suggest')+'<h2>Suggest a new appointment</h2>'+suggestForm(cl)+suggestionsList(data.reqs,'Your suggestions');
+}
+
+/* ---------- provider staff ---------- */
+function providerStaffDash(){
+  var cl=data.profiles.filter(function(p){return p.role==='client'});
+  var h='<h2>Your clients</h2>'+(cl.length?'<p>'+cl.map(function(c){return esc(c.full_name)}).join(', ')+'</p>':'<div class="callout">No clients are assigned to you yet. Your company or a coordinator assigns them.</div>');
+  return h+'<h2>Your sessions</h2>'+apptTable(data.appts,'suggest')+'<h2>Suggest a new appointment</h2>'+suggestForm(cl)+suggestionsList(data.reqs,'Your suggestions');
+}
+
+/* ---------- client ---------- */
+function clientDash(){
+  var fam=data.profiles.filter(function(x){return x.role==='family'});
+  return '<h2>Your appointments</h2>'+apptTable(data.appts,'suggest')+'<p class="muted">Suggest a change and a coordinator will review it.</p><h2>Suggest a new appointment</h2>'+suggestForm([me])+suggestionsList(data.reqs,'Your suggestions')+'<h2>Family with access</h2>'+familyTable(fam,true);
+}
+
+/* ---------- family ---------- */
+function familyDash(){
+  var c=pById(me.linked_client);
+  var h='<h2>'+(c?esc(c.full_name)+'\'s appointments':'Appointments')+'</h2>';
+  if(me.is_representative)return h+apptTable(data.appts,'suggest')+'<p class="muted">You are this client\'s representative. Suggest a change and a coordinator will review it.</p>'+(c?'<h2>Suggest a new appointment</h2>'+suggestForm([c]):'')+suggestionsList(data.reqs,'Your suggestions');
+  return h+apptTable(data.appts,'view')+'<div class="callout">You can view the plan. If you need to suggest changes, ask the client or a coordinator to make you a representative.</div>';
+}
+
+/* ---------- page ---------- */
+function dash(){
+  var h='<div class="row"><div><h1>You are '+esc(me.role==='family'&&me.is_representative?'the family representative':(YOU[me.role]||me.role))+'</h1><div class="muted">'+esc(me.full_name)+'</div></div><button class="ghost" onclick="logout()">Log out</button></div>';
+  if(!me.approved)return h+'<div class="callout"><b>Waiting for approval.</b><br>'+esc(WAIT[me.role]||'')+'</div>';
+  if(err)h+='<div class="err">'+esc(err)+'</div>';
+  if(note)h+='<div class="callout">'+esc(note)+'</div>';
+  if(isStaff())return h+staffDash();
+  if(me.role==='provider_company')return h+companyDash();
+  if(me.role==='provider_staff')return h+providerStaffDash();
+  if(me.role==='client')return h+clientDash();
+  return h+familyDash();
+}
+function render(){if(!me)keep();$('app').innerHTML=me?dash():authView()}
+sb.auth.onAuthStateChange(function(){setTimeout(refresh,0)});
+render();
+</script>
+</body>
+</html>
