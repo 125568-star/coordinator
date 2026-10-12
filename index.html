@@ -71,6 +71,7 @@ var view='login',role='client',err='',note='',tab='',me=null,editId=null,sugId=n
 var form={};
 var data={profiles:[],appts:[],companies:[],assigns:[],reqs:[]};
 var NAMES={admin:'Admin',coordinator:'Coordinator',provider_company:'Provider company',provider_staff:'Provider staff',client:'Client',family:'Family'};
+var YOU={admin:'the admin',coordinator:'the coordinator',provider_company:'a provider company',provider_staff:'a provider',client:'the client',family:'the family'};
 var HINTS={client:'See your plan and suggest changes',family:'See a family member\'s plan',provider_company:'Your company\'s clients and staff',provider_staff:'Your own clients and sessions',coordinator:'Runs the plan and approves changes'};
 var SIGNUP=['client','family','provider_company','provider_staff','coordinator'];
 var WAIT={coordinator:'The admin needs to approve your account before you can see any data.',provider_company:'A coordinator or the admin needs to approve your company account before you can see any data.',provider_staff:'Your company, a coordinator or the admin needs to approve your account before you can see any data.',family:'The client or a coordinator needs to approve your access before you can see anything.',client:'A coordinator needs to approve your account before you can see anything.',admin:'This admin account is not approved yet.'};
@@ -85,4 +86,123 @@ function isStaff(){return me&&(me.role==='admin'||me.role==='coordinator')}
 function isProv(){return me&&(me.role==='provider_company'||me.role==='provider_staff')}
 function canSuggest(){return me&&(me.role==='client'||isProv()||(me.role==='family'&&me.is_representative))}
 
-/*
+/* ---------- lookups ---------- */
+function pById(id){return data.profiles.find(function(x){return x.id===id})}
+function nameOf(id){var p=pById(id);return p?p.full_name:''}
+function compName(id){var c=data.companies.find(function(x){return x.id===id});return c?c.name:''}
+function apptById(id){return data.appts.find(function(x){return x.id===id})}
+function clientsList(){return data.profiles.filter(function(p){return p.role==='client'&&p.approved})}
+function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function fmt(d){if(!d)return '';var x=new Date(d+'T00:00:00');return isNaN(x)?d:x.toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short',year:'numeric'})}
+function opts(list,sel,labelFn,blank){return (blank?'<option value="">'+esc(blank)+'</option>':'')+list.map(function(x){return '<option value="'+esc(x.id)+'"'+(x.id===sel?' selected':'')+'>'+esc(labelFn(x))+'</option>'}).join('')}
+
+/* ---------- sign up / log in ---------- */
+function authView(){
+  var s=view==='signup';
+  var h='<div class="narrow"><div class="label">Portal</div><h1>'+(s?'Create your account':'Welcome back')+'</h1><p class="sub">'+(s?'Choose who you are, then sign up.':'Log in to see the plan, schedule and requests.')+'</p><div class="card">';
+  if(s){
+    h+='<label>I am a</label><div class="roles">'+SIGNUP.map(function(r){return '<div class="role '+(role===r?'sel':'')+'" tabindex="0" role="button" onclick="setRole(\''+r+'\')" onkeydown="if(event.key===\'Enter\')setRole(\''+r+'\')"><b>'+NAMES[r]+'</b><span>'+HINTS[r]+'</span></div>'}).join('')+'</div>';
+    h+='<label>Full name</label><input id="name" autocomplete="name" value="'+esc(form.name)+'">';
+    if(role==='provider_company')h+='<label>Company name</label><input id="co" value="'+esc(form.co)+'">';
+  }
+  h+='<label>Email</label><input id="email" type="email" autocomplete="email" value="'+esc(form.email)+'"><label>Password</label><input id="pw" type="password" autocomplete="'+(s?'new-password':'current-password')+'">';
+  if(s&&role==='family')h+='<label>Client\'s email</label><input id="link" type="email" placeholder="The client must already have an account" value="'+esc(form.link)+'">';
+  if(s&&role==='provider_staff')h+='<label>Your company\'s email</label><input id="link" type="email" placeholder="The email your company account uses" value="'+esc(form.link)+'">';
+  if(err)h+='<div class="err">'+esc(err)+'</div>';
+  if(note)h+='<div class="callout">'+esc(note)+'</div>';
+  h+='<div class="row" style="margin-top:16px"><button onclick="'+(s?'doSignup()':'doLogin()')+'">'+(s?'Sign up':'Log in')+'</button><button class="ghost" onclick="go(\''+(s?'login':'signup')+'\')">'+(s?'I have an account':'Create account')+'</button></div></div></div>';
+  return h;
+}
+function keep(){['name','email','link','co'].forEach(function(k){var e=$(k);if(e)form[k]=e.value})}
+function setRole(r){keep();role=r;err='';render()}
+function go(v){keep();view=v;err='';note='';render()}
+async function doSignup(){
+  var name=val('name'),email=val('email'),pw=$('pw').value,link=val('link'),co=val('co');
+  keep();
+  if(!name||!email||pw.length<6){err='Enter your name, an email and a password of 6+ characters.';return render()}
+  if(role==='family'&&!link){err='Enter your client\'s email.';return render()}
+  if(role==='provider_staff'&&!link){err='Enter your company\'s email.';return render()}
+  if(role==='provider_company'&&!co){err='Enter your company name.';return render()}
+  var meta={full_name:name,role:role};
+  if(role==='family')meta.client_email=link;
+  if(role==='provider_staff')meta.company_email=link;
+  if(role==='provider_company')meta.company_name=co;
+  var r=await sb.auth.signUp({email:email,password:pw,options:{data:meta}});
+  if(r.error){
+    var m=r.error.message||'';
+    if(m.indexOf('Database error')>-1){
+      m=role==='family'?'No client account found with that email.':role==='provider_staff'?'No provider company found with that email.':'We could not create the account. Check the details and try again.';
+    }
+    err=m;return render();
+  }
+  err='';form={};
+  if(!r.data.session){note='Check your email to confirm your account, then log in.';view='login'}
+  render();
+}
+async function doLogin(){
+  keep();
+  var r=await sb.auth.signInWithPassword({email:val('email'),password:$('pw').value});
+  if(r.error){err='Email or password is incorrect.';return render()}
+  err='';form={};
+}
+async function logout(){await sb.auth.signOut();me=null;tab='';view='login';err='';note='';render()}
+
+/* ---------- load data ---------- */
+async function refresh(){
+  var u=(await sb.auth.getUser()).data.user;
+  if(!u){me=null;tab='';return render()}
+  var p=await sb.from('profiles').select('*').eq('id',u.id).single();
+  me=p.data;
+  if(me&&me.approved){
+    var r=await Promise.all([
+      sb.from('profiles').select('*').order('full_name'),
+      sb.from('appointments').select('*').order('appt_date'),
+      sb.from('companies').select('*').order('name'),
+      sb.from('provider_assignments').select('*').order('created_at'),
+      sb.from('change_requests').select('*').order('created_at',{ascending:false})
+    ]);
+    data.profiles=r[0].data||[];data.appts=r[1].data||[];data.companies=r[2].data||[];data.assigns=r[3].data||[];data.reqs=r[4].data||[];
+  }
+  if(me&&!tab)tab=isStaff()?'requests':'sched';
+  render();
+}
+async function act(p,msg){
+  var r=await p;
+  if(r&&r.error){err=r.error.message;note=''}else{err='';note=msg||''}
+  editId=null;sugId=null;editP=null;
+  await refresh();
+}
+function setTab(t){tab=t;err='';note='';editId=null;sugId=null;editP=null;render()}
+function togglePast(){showPast=!showPast;render()}
+
+/* ---------- actions: schedule (coordinator and admin) ---------- */
+function addAppt(){
+  var c=val('ac'),t=val('at'),d=val('ad'),p=val('ap');
+  if(!c||!t||!d){err='Choose a client, a date and what the appointment is.';return render()}
+  act(sb.from('appointments').insert({client_id:c,title:t,appt_date:d,created_by:me.id,company_id:p||null}),'Appointment added.');
+}
+function delAppt(id){if(confirm('Remove this appointment?'))act(sb.from('appointments').delete().eq('id',id),'Appointment removed.')}
+function startEdit(id){editId=id;render()}
+function cancelEdit(){editId=null;sugId=null;render()}
+function saveAppt(id){
+  var d=val('ed'),t=val('et'),p=val('ep');
+  if(!d||!t){err='Enter a date and what the appointment is.';return render()}
+  act(sb.from('appointments').update({appt_date:d,title:t,company_id:p||null}).eq('id',id),'Appointment saved.');
+}
+
+/* ---------- actions: access and people ---------- */
+function setAccess(id,ok){act(sb.rpc('set_access',{p_id:id,p_approved:ok}),ok?'Access approved.':'Access revoked.')}
+function setRep(id,v){act(sb.rpc('set_representative',{p_id:id,p_value:v}),v?'Representative set.':'Representative removed.')}
+function startEditP(id){editP=id;render()}
+function saveP(id){
+  act(sb.rpc('admin_update_profile',{p_id:id,p_full_name:val('pn'),p_role:val('pr'),p_company_id:val('pc')||null,p_approved:val('pa')==='yes'}),'Account saved.');
+}
+
+/* ---------- actions: providers ---------- */
+function refillStaff(){
+  var co=val('asco'),sel=$('asst');if(!sel)return;
+  var st=data.profiles.filter(function(p){return p.role==='provider_staff'&&p.approved&&p.company_id===co});
+  sel.innerHTML=opts(st,'',function(p){return p.full_name},'No named person yet');
+}
+function addAssign(){
+  var c=val('asc'),co=val('asco'),sv=val('assv'),st=val('asst');
