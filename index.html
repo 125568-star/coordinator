@@ -202,7 +202,7 @@ function renderRecovery(){
 const pendReqs = () => D.reqs.filter(r => r.status === 'pending').length;
 const pendUsers = () => D.profiles.filter(p => !p.approved).length;
 function tabsFor(){
-  const t = [['appointments','Appointments'], ['requests','Requests', isCoord() ? pendReqs() : 0]];
+  const t = [['appointments','Calendar'], ['requests','Requests', isCoord() ? pendReqs() : 0]];
   if (isCoord()) t.push(['clients','Clients'], ['people','People', pendUsers()], ['companies','Companies']);
   return t;
 }
