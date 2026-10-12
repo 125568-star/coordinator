@@ -14,126 +14,66 @@ document.documentElement.dataset.theme=d?'dark':'light';})();
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 <style>
-:root{
-  --navy:#0f2a5c; --blue:#1f56b8; --blue-hover:#1a4a9f; --magenta:#c8236f; --paper:#f4f6fb; --ink:#16213a;
-  --muted:#59647f; --line:#dbe1ee; --white:#fff; --red:#b3261e; --radius:10px;
-  --field-line:#b9c3da; --thead:#fafbfe; --dash:rgba(200,35,111,.4);
-  --banner-bg:#fff3f8; --banner-line:#f1c3d8;
-  --pend-bg:#fff1cf; --pend-fg:#76510a; --ok-bg:#dcf4e4; --ok-fg:#14633a;
-  --off-bg:#eceff5; --off-fg:#4a5470; --rep-bg:#e4ecfb; --rep-fg:#0f2a5c;
-  --toast-bg:#0f2a5c; --toast-fg:#fff;
-  color-scheme:light;
-}
-:root[data-theme="dark"]{
-  --navy:#d3e0ff; --blue:#3a72d8; --blue-hover:#2f63c4; --magenta:#ff6fae; --paper:#0d1424; --ink:#e8ecf7;
-  --muted:#9eaacb; --line:#2a3658; --white:#16203a; --red:#ff8a80;
-  --field-line:#40507a; --thead:#1a2644; --dash:rgba(255,111,174,.45);
-  --banner-bg:#2a1830; --banner-line:#5a2a4c;
-  --pend-bg:#4a3a10; --pend-fg:#ffdc82; --ok-bg:#143d28; --ok-fg:#8fe0ae;
-  --off-bg:#26314f; --off-fg:#b7c2e0; --rep-bg:#22345f; --rep-fg:#cddcff;
-  --toast-bg:#d3e0ff; --toast-fg:#0d1424;
-  color-scheme:dark;
-}
-*{box-sizing:border-box}
-[hidden]{display:none!important}
+:root{--navy:#0f2a5c;--blue:#1f56b8;--blue-hover:#1a4a9f;--magenta:#c8236f;--paper:#f4f6fb;--ink:#16213a;--muted:#59647f;--line:#dbe1ee;--white:#fff;--red:#b3261e;--radius:10px;--field-line:#b9c3da;--thead:#fafbfe;--dash:rgba(200,35,111,.4);--banner-bg:#fff3f8;--banner-line:#f1c3d8;--pend-bg:#fff1cf;--pend-fg:#76510a;--ok-bg:#dcf4e4;--ok-fg:#14633a;--off-bg:#eceff5;--off-fg:#4a5470;--toast-bg:#0f2a5c;--toast-fg:#fff;color-scheme:light}
+:root[data-theme="dark"]{--navy:#d3e0ff;--blue:#3a72d8;--blue-hover:#2f63c4;--magenta:#ff6fae;--paper:#0d1424;--ink:#e8ecf7;--muted:#9eaacb;--line:#2a3658;--white:#16203a;--red:#ff8a80;--field-line:#40507a;--thead:#1a2644;--dash:rgba(255,111,174,.45);--banner-bg:#2a1830;--banner-line:#5a2a4c;--pend-bg:#4a3a10;--pend-fg:#ffdc82;--ok-bg:#143d28;--ok-fg:#8fe0ae;--off-bg:#26314f;--off-fg:#b7c2e0;--toast-bg:#d3e0ff;--toast-fg:#0d1424;color-scheme:dark}
+*{box-sizing:border-box}[hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.5 "Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-h1,h2,h3,p{margin:0}
-button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3,p{margin:0}button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:3px solid var(--magenta);outline-offset:2px}
-
-/* brand block: logo top left, title, tagline under the title */
-.brand{display:flex;align-items:center;gap:14px}
-.brand .logo{flex:none;display:block}
+.brand{display:flex;align-items:center;gap:14px}.brand svg{flex:none}
 .brand h1{font-size:1.55rem;line-height:1.1;color:var(--navy);letter-spacing:-.01em}
-.brand .tag{color:var(--magenta);font-size:.95rem;margin-top:2px}
-.brand.big h1{font-size:2rem}
-
-/* header */
+.brand .tag{color:var(--magenta);font-size:.95rem;margin-top:2px}.brand.big h1{font-size:2rem}
 .top{background:var(--white);border-bottom:3px dashed var(--dash);padding:12px 24px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between}
 .who{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
-.me{display:flex;flex-direction:column;line-height:1.2;text-align:right}
-.me small{color:var(--muted)}
-.as{display:flex;align-items:center;gap:8px;color:var(--muted)}
-.as select{min-width:200px}
-#themesel{min-width:0}
+.me{display:flex;flex-direction:column;line-height:1.2;text-align:right}.me small{color:var(--muted)}
+.as{display:flex;align-items:center;gap:8px;color:var(--muted)}.as select{min-width:200px}
+.themesel{width:auto}
 .banner{background:var(--banner-bg);border-bottom:1px solid var(--banner-line);padding:10px 24px;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
-
-/* tabs */
 .tabs{display:flex;gap:4px;padding:0 24px;background:var(--white);border-bottom:1px solid var(--line);overflow-x:auto}
 .tabs button{background:none;border:0;border-bottom:4px solid transparent;padding:14px 14px 10px;cursor:pointer;color:var(--muted);font-weight:700;white-space:nowrap}
 .tabs button[aria-current="page"]{color:var(--navy);border-bottom-color:var(--blue)}
 .tabs .count{display:inline-block;min-width:22px;padding:0 6px;margin-left:6px;border-radius:11px;background:var(--magenta);color:var(--paper);font-size:.8rem;text-align:center}
-
 main{max-width:1080px;margin:0 auto;padding:24px}
 .bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin:8px 0 14px}
 .bar h2{font-size:1.3rem;color:var(--navy)}
 h3.sub{font-size:1.05rem;color:var(--muted);margin:28px 0 10px}
-.hint{color:var(--muted)}
 .empty{background:var(--white);border:1px dashed var(--line);border-radius:var(--radius);padding:28px;text-align:center;color:var(--muted)}
-
-/* tables */
 .scroll{overflow-x:auto;background:var(--white);border:1px solid var(--line);border-radius:var(--radius)}
 table{width:100%;border-collapse:collapse;min-width:620px}
 th,td{padding:12px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
 th{font-size:.9rem;color:var(--muted);font-weight:700;background:var(--thead)}
-tr:last-child td{border-bottom:0}
-td.act{text-align:right;white-space:nowrap}
-td small{display:block;color:var(--muted)}
-
-/* controls */
+tr:last-child td{border-bottom:0}td.act{text-align:right;white-space:nowrap}td small{display:block;color:var(--muted)}
 button{cursor:pointer}
 .primary{background:var(--blue);color:#fff;border:0;border-radius:8px;padding:10px 18px;font-weight:700}
-.primary:hover{background:var(--blue-hover)}
-.primary:disabled{opacity:.6;cursor:wait}
+.primary:hover{background:var(--blue-hover)}.primary:disabled{opacity:.6;cursor:wait}
 .ghost{background:var(--white);border:1px solid var(--line);border-radius:8px;padding:9px 14px;font-weight:700;color:var(--navy)}
-.ghost:hover{border-color:var(--blue)}
-.ghost.sm,.primary.sm{padding:5px 10px;font-size:.92rem}
-.ghost.danger{color:var(--red)}
+.ghost:hover{border-color:var(--blue)}.ghost.sm,.primary.sm{padding:5px 10px;font-size:.92rem}.ghost.danger{color:var(--red)}
 .link{background:none;border:0;color:var(--blue);text-decoration:underline;padding:4px 0}
 input,select,textarea{width:100%;background:var(--white);border:1px solid var(--field-line);border-radius:8px;padding:10px 12px}
-input[type=checkbox]{width:auto}
 textarea{min-height:84px;resize:vertical}
 label{display:grid;gap:5px;font-weight:700}
-label.check{display:flex;gap:10px;align-items:center}
-.stack{display:grid;gap:14px}
-.msg{color:var(--red);min-height:1.2em;font-weight:700}
+.stack{display:grid;gap:14px}.msg{color:var(--red);min-height:1.2em;font-weight:700}
 .links{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:14px}
-
-/* status chips */
 .chip{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.88rem;font-weight:700}
-.chip.pending{background:var(--pend-bg);color:var(--pend-fg)}
-.chip.approved{background:var(--ok-bg);color:var(--ok-fg)}
-.chip.declined{background:var(--off-bg);color:var(--off-fg)}
-.chip.rep{background:var(--rep-bg);color:var(--rep-fg)}
-
-/* sign-in */
+.chip.pending{background:var(--pend-bg);color:var(--pend-fg)}.chip.approved{background:var(--ok-bg);color:var(--ok-fg)}.chip.declined{background:var(--off-bg);color:var(--off-fg)}
+.errbox{background:var(--banner-bg);border:1px solid var(--banner-line);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;color:var(--red);font-weight:700}
 .authwrap{min-height:100vh;display:grid;place-items:center;padding:24px;position:relative}
 .themecorner{position:absolute;top:16px;right:16px}
 .card{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:28px}
-.auth{width:100%;max-width:460px;display:grid;gap:18px}
-.auth h2{font-size:1.3rem;color:var(--navy)}
-
-/* dialog */
+.auth{width:100%;max-width:460px;display:grid;gap:18px}.auth h2{font-size:1.3rem;color:var(--navy)}
 dialog{background:var(--white);color:var(--ink);border:0;border-radius:14px;padding:26px;width:min(520px,92vw);box-shadow:0 20px 60px rgba(15,42,92,.3)}
 dialog::backdrop{background:rgba(15,42,92,.45)}
 dialog h2{font-size:1.25rem;color:var(--navy);margin-bottom:14px}
 .row-end{display:flex;gap:10px;justify-content:flex-end;margin-top:6px}
-
-/* toast */
 #toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);background:var(--toast-bg);color:var(--toast-fg);padding:12px 18px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:92vw;z-index:50}
-#toast.show{opacity:1;transform:translate(-50%,0)}
-#toast.err{background:#b3261e;color:#fff}
-
-@media (max-width:640px){
-  .top{padding:12px 16px}.tabs{padding:0 12px}.banner{padding:10px 16px}main{padding:16px}
-  .me{text-align:left}.brand h1{font-size:1.3rem}
-}
+#toast.show{opacity:1;transform:translate(-50%,0)}#toast.err{background:#b3261e;color:#fff}
+@media (max-width:640px){.top{padding:12px 16px}.tabs{padding:0 12px}.banner{padding:10px 16px}main{padding:16px}.me{text-align:left}.brand h1{font-size:1.3rem}}
 @media (prefers-reduced-motion:reduce){#toast{transition:none}}
 </style>
 </head>
 <body>
-<div id="app"></div>
+<div id="app"><p style="padding:24px">Loading…</p></div>
 <dialog id="dlg" aria-labelledby="dlgTitle"></dialog>
 <div id="toast" role="status" aria-live="polite"></div>
 
@@ -142,19 +82,25 @@ dialog h2{font-size:1.25rem;color:var(--navy);margin-bottom:14px}
 /* ---------- connection (the anon key is public by design; Row Level Security protects the data) ---------- */
 const SUPABASE_URL = 'https://pulbcpjwxliwnmkiyfhe.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1bGJjcGp3eGxpd25ta2l5ZmhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MDYzNDksImV4cCI6MjEwNzI4MjM0OX0.skxulb3shDKFhigAL2en1qV6ePytzTHBdBrPvW3CHl0';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-/* ---------- constants & state ---------- */
-const ROLE_LABEL  = {admin:'Admin',coordinator:'Coordinator',provider_company:'Provider company',provider_staff:'Provider staff',client:'Client',family:'Family'};
+/* ---------- ASSUMED DATABASE LAYOUT: edit here if your tables/columns differ ----------
+ profiles(id, email, full_name, role, company_id)
+ companies(id, name)
+ appointments(id, client_id, company_id, appt_date, appt_time, title, notes)
+ assignments(id, appointment_id, staff_id)
+ requests(id, client_id, requested_by, req_date, details, status)  */
+const TABLE = {profiles:'profiles', companies:'companies', appts:'appointments', assigns:'assignments', reqs:'requests'};
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const ROLE_LABEL = {admin:'Admin',coordinator:'Coordinator',provider_company:'Provider company',provider_staff:'Provider staff',client:'Client',family:'Family'};
 const ROLE_PLURAL = {admin:'Admins',coordinator:'Coordinators',provider_company:'Provider companies',provider_staff:'Provider staff',client:'Clients',family:'Family members'};
 const ORDER = ['admin','coordinator','provider_company','provider_staff','client','family'];
-const app = document.getElementById('app');
-const dlg = document.getElementById('dlg');
-let me = null, view = null, tab = 'appointments', authMode = 'signin';
+const app = document.getElementById('app'), dlg = document.getElementById('dlg');
+let me = null, view = null, tab = 'appointments', authMode = 'signin', loadErrs = [];
 let D = {profiles:[],companies:[],appts:[],assigns:[],reqs:[]};
 let recovering = /type=recovery/.test(location.hash);
 
-/* ---------- small helpers ---------- */
+/* ---------- helpers ---------- */
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmtDate = d => d ? new Date(d + 'T00:00:00').toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short',year:'numeric'}) : '';
 const todayStr = () => new Date().toLocaleDateString('en-CA');
@@ -167,8 +113,11 @@ const prof = id => D.profiles.find(x => x.id === id);
 const nameOf = id => { const p = prof(id); return p ? (p.full_name || p.email) : '—'; };
 const compName = id => id ? (D.companies.find(x => x.id === id)?.name || 'Provider') : '—';
 const isCoord = () => ['admin','coordinator'].includes(view.role);
+const byRole = r => D.profiles.filter(p => p.role === r);
+const opts = (list, val, label, empty) => (empty ? `<option value="">${esc(empty)}</option>` : '') + list.map(x => `<option value="${esc(x[val])}">${esc(label(x))}</option>`).join('');
+const nul = v => v === '' || v == null ? null : v;
 
-/* ---------- theme: light, dark, or match the device ---------- */
+/* ---------- theme ---------- */
 function themePref(){ try { return localStorage.getItem('gsc_theme') || 'auto'; } catch(e){ return 'auto'; } }
 function applyTheme(){
   const p = themePref();
@@ -176,4 +125,193 @@ function applyTheme(){
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';
 }
 function setTheme(p){ try { localStorage.setItem('gsc_theme', p); } catch(e){} applyTheme(); }
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (themePref() ===
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (themePref() === 'auto') applyTheme(); });
+const themeSel = () => `<select class="themesel" data-themesel aria-label="Theme">${[['auto','Match device'],['light','Light'],['dark','Dark']].map(([v,l]) => `<option value="${v}"${themePref()===v?' selected':''}>${l}</option>`).join('')}</select>`;
+
+/* ---------- data ---------- */
+async function loadAll(){
+  loadErrs = [];
+  await Promise.all(Object.keys(TABLE).map(async k => {
+    const {data, error} = await sb.from(TABLE[k]).select('*');
+    if (error) { loadErrs.push(TABLE[k] + ': ' + error.message); D[k] = []; } else D[k] = data || [];
+  }));
+}
+async function run(p, ok){
+  const {error} = await p;
+  if (error) { toast(error.message, true); return false; }
+  await loadAll(); render(); if (ok) toast(ok); return true;
+}
+
+/* ---------- boot & auth ---------- */
+const logo = `<svg class="logo" width="44" height="44" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="19" fill="none" stroke="#c8236f" stroke-width="3" stroke-dasharray="5 4"/><circle cx="22" cy="22" r="11" fill="#1f56b8"/></svg>`;
+const brand = big => `<div class="brand${big ? ' big' : ''}">${logo}<div><h1>Coordinator</h1><p class="tag">Ground Support Crew</p></div></div>`;
+
+async function boot(session){
+  if (recovering) return renderRecovery();
+  if (!session) { me = view = null; return renderAuth(); }
+  await loadAll();
+  me = prof(session.user.id);
+  if (!me) {
+    app.innerHTML = `<div class="authwrap"><div class="card auth">${brand(true)}<h2>Account not set up yet</h2><p>You are signed in as ${esc(session.user.email)}, but there is no profile for this account. Ask a coordinator to add you.</p>${loadErrs.length ? `<div class="errbox">${loadErrs.map(esc).join('<br>')}</div>` : ''}<button class="ghost" data-act="signout">Sign out</button></div></div>`;
+    return;
+  }
+  view = me; render();
+}
+
+function renderAuth(){
+  const t = {signin:'Sign in', signup:'Create account', forgot:'Reset password'}[authMode];
+  app.innerHTML = `<div class="authwrap"><div class="themecorner">${themeSel()}</div><div class="card auth">${brand(true)}<h2>${t}</h2>
+  <form id="af" class="stack">
+  ${authMode === 'signup' ? '<label>Full name<input name="name" required autocomplete="name"></label>' : ''}
+  <label>Email<input name="email" type="email" required autocomplete="email"></label>
+  ${authMode !== 'forgot' ? `<label>Password<input name="pw" type="password" required minlength="8" autocomplete="${authMode==='signup'?'new-password':'current-password'}"></label>` : ''}
+  <div class="msg" id="amsg" role="alert"></div><button class="primary" id="abtn">${t}</button></form>
+  <div class="links">${authMode !== 'signin' ? '<button class="link" data-mode="signin">Back to sign in</button>' : '<button class="link" data-mode="signup">Create account</button><button class="link" data-mode="forgot">Forgot password?</button>'}</div></div></div>`;
+  document.getElementById('af').onsubmit = async e => {
+    e.preventDefault();
+    const f = Object.fromEntries(new FormData(e.target)), msg = document.getElementById('amsg'), btn = document.getElementById('abtn');
+    btn.disabled = true; msg.textContent = '';
+    let r;
+    if (authMode === 'signin') r = await sb.auth.signInWithPassword({email:f.email, password:f.pw});
+    else if (authMode === 'signup') r = await sb.auth.signUp({email:f.email, password:f.pw, options:{data:{full_name:f.name}, emailRedirectTo:location.origin + location.pathname}});
+    else r = await sb.auth.resetPasswordForEmail(f.email, {redirectTo:location.origin + location.pathname});
+    btn.disabled = false;
+    if (r.error) { msg.textContent = r.error.message; return; }
+    if (authMode === 'forgot') { msg.style.color = 'var(--ok-fg)'; msg.textContent = 'Check your email for a reset link.'; }
+    else if (authMode === 'signup' && !r.data.session) { msg.style.color = 'var(--ok-fg)'; msg.textContent = 'Account created. Check your email to confirm it, then sign in.'; }
+  };
+}
+
+function renderRecovery(){
+  app.innerHTML = `<div class="authwrap"><div class="card auth">${brand(true)}<h2>Choose a new password</h2><form id="rf" class="stack"><label>New password<input name="pw" type="password" required minlength="8" autocomplete="new-password"></label><div class="msg" id="amsg" role="alert"></div><button class="primary">Save password</button></form></div></div>`;
+  document.getElementById('rf').onsubmit = async e => {
+    e.preventDefault();
+    const {error} = await sb.auth.updateUser({password:new FormData(e.target).get('pw')});
+    if (error) { document.getElementById('amsg').textContent = error.message; return; }
+    recovering = false; history.replaceState(null, '', location.pathname);
+    toast('Password updated.'); boot((await sb.auth.getSession()).data.session);
+  };
+}
+
+/* ---------- main view ---------- */
+function tabsFor(){
+  const pend = D.reqs.filter(r => r.status === 'pending').length;
+  const t = [['appointments','Appointments'], ['requests','Requests', isCoord() ? pend : 0]];
+  if (isCoord()) t.push(['people','People'], ['companies','Companies']);
+  return t;
+}
+function render(){
+  if (!me) return;
+  if (!tabsFor().some(t => t[0] === tab)) tab = 'appointments';
+  const pend = D.reqs.filter(r => r.status === 'pending').length;
+  app.innerHTML = `<header class="top">${brand()}<div class="who">
+    ${me.role === 'admin' ? `<label class="as">View as <select data-viewas>${D.profiles.map(p => `<option value="${esc(p.id)}"${p.id===view.id?' selected':''}>${esc(p.full_name||p.email)} (${ROLE_LABEL[p.role]||p.role})</option>`).join('')}</select></label>` : ''}
+    ${themeSel()}<div class="me"><strong>${esc(nameOf(view.id))}</strong><small>${esc(ROLE_LABEL[view.role] || view.role)}</small></div>
+    <button class="ghost sm" data-act="signout">Sign out</button></div></header>
+    ${isCoord() && pend ? `<div class="banner"><strong>${pend} request${pend>1?'s':''} waiting for a decision.</strong><button class="link" data-tab="requests">Review requests</button></div>` : ''}
+    <nav class="tabs" aria-label="Sections">${tabsFor().map(([k,l,c]) => `<button data-tab="${k}"${k===tab?' aria-current="page"':''}>${l}${c ? `<span class="count">${c}</span>` : ''}</button>`).join('')}</nav>
+    <main>${loadErrs.length ? `<div class="errbox">Some data could not be loaded:<br>${loadErrs.map(esc).join('<br>')}</div>` : ''}${{appointments:viewAppts, requests:viewReqs, people:viewPeople, companies:viewCompanies}[tab]()}</main>`;
+}
+
+function myAppts(){
+  const r = view.role; let a = D.appts;
+  if (r === 'client') a = a.filter(x => x.client_id === view.id);
+  else if (r === 'provider_staff') a = a.filter(x => D.assigns.some(s => s.appointment_id === x.id && s.staff_id === view.id));
+  else if (r === 'provider_company') a = a.filter(x => x.company_id === view.company_id);
+  return [...a].sort((x, y) => (x.appt_date || '').localeCompare(y.appt_date || '') || (x.appt_time || '').localeCompare(y.appt_time || ''));
+}
+function apptTable(list){
+  if (!list.length) return '<div class="empty">Nothing here.</div>';
+  return `<div class="scroll"><table><thead><tr><th>When</th><th>Appointment</th><th>Client</th><th>Provider</th><th>Staff</th>${isCoord()?'<th></th>':''}</tr></thead><tbody>${list.map(a => {
+    const staff = D.assigns.filter(s => s.appointment_id === a.id).map(s => nameOf(s.staff_id)).join(', ') || '—';
+    return `<tr><td>${esc(fmtDate(a.appt_date))}<small>${esc((a.appt_time||'').slice(0,5))}</small></td><td><strong>${esc(a.title)}</strong>${a.notes?`<small>${esc(a.notes)}</small>`:''}</td><td>${esc(nameOf(a.client_id))}</td><td>${esc(compName(a.company_id))}</td><td>${esc(staff)}</td>${isCoord()?`<td class="act"><button class="ghost sm" data-act="assign" data-id="${esc(a.id)}">Assign staff</button> <button class="ghost sm danger" data-act="del-appt" data-id="${esc(a.id)}">Delete</button></td>`:''}</tr>`;
+  }).join('')}</tbody></table></div>`;
+}
+function viewAppts(){
+  const all = myAppts(), t = todayStr();
+  const up = all.filter(a => (a.appt_date || '') >= t), past = all.filter(a => (a.appt_date || '') < t).reverse();
+  return `<div class="bar"><h2>Appointments</h2>${isCoord() ? '<button class="primary" data-act="add-appt">Add appointment</button>' : ''}</div>${apptTable(up)}${past.length ? `<h3 class="sub">Past</h3>${apptTable(past)}` : ''}`;
+}
+
+function viewReqs(){
+  let list = isCoord() ? D.reqs : D.reqs.filter(r => r.requested_by === view.id || r.client_id === view.id);
+  list = [...list].sort((a, b) => (b.req_date || '').localeCompare(a.req_date || ''));
+  const canAsk = ['client','family','admin','coordinator'].includes(view.role);
+  return `<div class="bar"><h2>Requests</h2>${canAsk ? '<button class="primary" data-act="add-req">New request</button>' : ''}</div>${!list.length ? '<div class="empty">No requests yet.</div>' : `<div class="scroll"><table><thead><tr><th>Date wanted</th><th>Details</th><th>Client</th><th>Status</th>${isCoord()?'<th></th>':''}</tr></thead><tbody>${list.map(r => `<tr><td>${esc(fmtDate(r.req_date))}</td><td>${esc(r.details)}<small>Asked by ${esc(nameOf(r.requested_by))}</small></td><td>${esc(nameOf(r.client_id))}</td><td><span class="chip ${esc(r.status)}">${esc(r.status)}</span></td>${isCoord()?`<td class="act">${r.status==='pending'?`<button class="primary sm" data-act="req-set" data-id="${esc(r.id)}" data-s="approved">Approve</button> <button class="ghost sm" data-act="req-set" data-id="${esc(r.id)}" data-s="declined">Decline</button>`:''}</td>`:''}</tr>`).join('')}</tbody></table></div>`}`;
+}
+
+function viewPeople(){
+  const canEdit = me.role === 'admin';
+  return `<div class="bar"><h2>People</h2></div>${ORDER.map(r => {
+    const L = byRole(r); if (!L.length) return '';
+    return `<h3 class="sub">${ROLE_PLURAL[r]}</h3><div class="scroll"><table><thead><tr><th>Name</th><th>Email</th><th>Provider</th><th>Role</th></tr></thead><tbody>${L.map(p => `<tr><td>${esc(p.full_name||'—')}</td><td>${esc(p.email)}</td><td>${canEdit && ['provider_staff','provider_company'].includes(p.role) ? `<select data-pcomp="${esc(p.id)}">${opts(D.companies,'id',c=>c.name,'None')}</select>`.replace(`value="${p.company_id}"`, `value="${p.company_id}" selected`) : esc(compName(p.company_id))}</td><td>${canEdit ? `<select data-prole="${esc(p.id)}">${ORDER.map(o => `<option value="${o}"${o===p.role?' selected':''}>${ROLE_LABEL[o]}</option>`).join('')}</select>` : esc(ROLE_LABEL[p.role])}</td></tr>`).join('')}</tbody></table></div>`;
+  }).join('') || '<div class="empty">No people yet.</div>'}`;
+}
+
+function viewCompanies(){
+  return `<div class="bar"><h2>Provider companies</h2><button class="primary" data-act="add-comp">Add company</button></div>${!D.companies.length ? '<div class="empty">No companies yet.</div>' : `<div class="scroll"><table><thead><tr><th>Name</th><th>Staff</th><th></th></tr></thead><tbody>${D.companies.map(c => `<tr><td><strong>${esc(c.name)}</strong></td><td>${esc(D.profiles.filter(p=>p.company_id===c.id).map(p=>p.full_name||p.email).join(', ')||'—')}</td><td class="act"><button class="ghost sm danger" data-act="del-comp" data-id="${esc(c.id)}">Delete</button></td></tr>`).join('')}</tbody></table></div>`}`;
+}
+
+/* ---------- dialogs & actions ---------- */
+function openDlg(title, body, submit){
+  dlg.innerHTML = `<h2 id="dlgTitle">${esc(title)}</h2><form id="df" class="stack">${body}<div class="row-end"><button type="button" class="ghost" data-act="close">Cancel</button><button class="primary">Save</button></div></form>`;
+  document.getElementById('df').onsubmit = async e => {
+    e.preventDefault();
+    if (await submit(Object.fromEntries(new FormData(e.target)))) dlg.close();
+  };
+  dlg.showModal();
+}
+const ACT = {
+  signout: async () => { await sb.auth.signOut(); },
+  close: () => dlg.close(),
+  'add-appt': () => openDlg('Add appointment', `
+    <label>Client<select name="client_id" required>${opts(byRole('client'),'id',p=>p.full_name||p.email,'Choose a client')}</select></label>
+    <label>Title<input name="title" required></label>
+    <label>Date<input name="appt_date" type="date" required value="${todayStr()}"></label>
+    <label>Time<input name="appt_time" type="time"></label>
+    <label>Provider company<select name="company_id">${opts(D.companies,'id',c=>c.name,'None yet')}</select></label>
+    <label>Notes<textarea name="notes"></textarea></label>`,
+    f => run(sb.from(TABLE.appts).insert({client_id:f.client_id, title:f.title, appt_date:f.appt_date, appt_time:nul(f.appt_time), company_id:nul(f.company_id), notes:nul(f.notes)}), 'Appointment added.')),
+  assign: d => openDlg('Assign staff', `<label>Staff member<select name="staff_id" required>${opts(byRole('provider_staff'),'id',p=>p.full_name||p.email,'Choose staff')}</select></label>`,
+    f => run(sb.from(TABLE.assigns).insert({appointment_id:d.id, staff_id:f.staff_id}), 'Staff assigned.')),
+  'del-appt': d => confirm('Delete this appointment?') && run(sb.from(TABLE.appts).delete().eq('id', d.id), 'Appointment deleted.'),
+  'add-req': () => openDlg('New request', `
+    ${['client'].includes(view.role) ? '' : `<label>For client<select name="client_id" required>${opts(byRole('client'),'id',p=>p.full_name||p.email,'Choose a client')}</select></label>`}
+    <label>Date wanted<input name="req_date" type="date" required value="${todayStr()}"></label>
+    <label>Details<textarea name="details" required></textarea></label>`,
+    f => run(sb.from(TABLE.reqs).insert({client_id:view.role==='client'?view.id:f.client_id, requested_by:me.id, req_date:f.req_date, details:f.details, status:'pending'}), 'Request sent.')),
+  'req-set': d => run(sb.from(TABLE.reqs).update({status:d.s}).eq('id', d.id), 'Request ' + d.s + '.'),
+  'add-comp': () => openDlg('Add provider company', '<label>Company name<input name="name" required></label>',
+    f => run(sb.from(TABLE.companies).insert({name:f.name}), 'Company added.')),
+  'del-comp': d => confirm('Delete this company?') && run(sb.from(TABLE.companies).delete().eq('id', d.id), 'Company deleted.')
+};
+document.addEventListener('click', e => {
+  const a = e.target.closest('[data-act]'); if (a) return ACT[a.dataset.act]?.(a.dataset);
+  const t = e.target.closest('[data-tab]'); if (t) { tab = t.dataset.tab; render(); return; }
+  const m = e.target.closest('[data-mode]'); if (m) { authMode = m.dataset.mode; renderAuth(); }
+});
+document.addEventListener('change', e => {
+  const s = e.target;
+  if (s.matches('[data-themesel]')) setTheme(s.value);
+  else if (s.matches('[data-viewas]')) { view = prof(s.value) || me; tab = 'appointments'; render(); }
+  else if (s.dataset.prole) run(sb.from(TABLE.profiles).update({role:s.value}).eq('id', s.dataset.prole), 'Role updated.');
+  else if (s.dataset.pcomp) run(sb.from(TABLE.profiles).update({company_id:nul(s.value)}).eq('id', s.dataset.pcomp), 'Provider updated.');
+});
+
+/* ---------- never a blank page: show any error on screen ---------- */
+function fatal(msg){
+  if (app.children.length > 1 || !/Loading/.test(app.textContent)) { toast(msg, true); return; }
+  app.innerHTML = `<div class="authwrap"><div class="card auth"><h2>Something went wrong</h2><div class="errbox">${esc(msg)}</div><button class="ghost" onclick="location.reload()">Reload</button></div></div>`;
+}
+addEventListener('error', e => fatal(e.message));
+addEventListener('unhandledrejection', e => fatal(e.reason?.message || String(e.reason)));
+
+/* ---------- start ---------- */
+applyTheme();
+sb.auth.onAuthStateChange((ev, session) => {
+  if (ev === 'PASSWORD_RECOVERY') recovering = true;
+  if (ev === 'INITIAL_SESSION' || ev === 'SIGNED_IN' || ev === 'SIGNED_OUT' || ev === 'PASSWORD_RECOVERY') setTimeout(() => boot(session), 0);
+});
+</script>
+</body>
+</html>
