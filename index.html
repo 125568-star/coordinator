@@ -29,10 +29,10 @@ h1,h2,h3,p{margin:0}button,input,select,textarea{font:inherit;color:inherit}
 .brand{display:flex;align-items:center;gap:14px}.brand svg{flex:none}
 .brand h1{font-size:1.55rem;line-height:1.1;color:var(--navy);letter-spacing:-.01em}
 .brand .tag{color:var(--magenta);font-size:.95rem;margin-top:2px}.brand.big h1{font-size:2rem}
-.top{background:var(--white);border-bottom:3px dashed var(--dash);padding:12px 24px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between}
+.top{background:var(--white);border-bottom:3px solid var(--dash);padding:12px 24px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:flex-end;font-size:.8rem}
 .who{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
 .me{display:flex;flex-direction:column;line-height:1.2;text-align:right}.me small{color:var(--muted)}
-.as{display:flex;align-items:center;gap:8px;color:var(--muted)}.as select{min-width:200px}
+.as{display:flex;align-items:center;gap:8px;color:var(--muted)}.as select{min-width:200px;font-size:inherit}.top .ghost.sm{font-size:inherit}
 .themesel{width:auto}
 .banner{background:var(--banner-bg);border-bottom:1px solid var(--banner-line);padding:10px 24px;display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center}
 .tabs{display:flex;gap:4px;padding:0 24px;background:var(--white);border-bottom:1px solid var(--line);overflow-x:auto}
@@ -210,7 +210,7 @@ function render(){
   if (!me) return;
   if (!tabsFor().some(t => t[0] === tab)) tab = 'appointments';
   const pr = pendReqs(), pu = pendUsers();
-  app.innerHTML = `<header class="top">${brand()}<div class="who">
+  app.innerHTML = `<header class="top"><div class="who">
     ${me.role === 'admin' ? `<label class="as">View as <select data-viewas>${D.profiles.map(p => `<option value="${esc(p.id)}"${p.id===view.id?' selected':''}>${esc(pname(p))} (${ROLE_LABEL[p.role]||p.role})</option>`).join('')}</select></label>` : ''}
     <div class="me"><strong>${esc(pname(view))}</strong><small>${esc(ROLE_LABEL[view.role] || view.role)}</small></div>
     <button class="ghost sm" data-act="signout">Sign out</button></div></header>
