@@ -29,18 +29,19 @@ h1,h2,h3,p{margin:0}button,input,select,textarea{font:inherit;color:inherit}
 .me{display:flex;flex-direction:column;line-height:1.2;text-align:right}.me small{color:var(--muted)}
 .as{display:flex;align-items:center;gap:8px;color:var(--muted)}.as select{min-width:200px}
 .themesel{width:auto}
-.banner{background:var(--banner-bg);border-bottom:1px solid var(--banner-line);padding:10px 24px;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
+.banner{background:var(--banner-bg);border-bottom:1px solid var(--banner-line);padding:10px 24px;display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center}
 .tabs{display:flex;gap:4px;padding:0 24px;background:var(--white);border-bottom:1px solid var(--line);overflow-x:auto}
 .tabs button{background:none;border:0;border-bottom:4px solid transparent;padding:14px 14px 10px;cursor:pointer;color:var(--muted);font-weight:700;white-space:nowrap}
 .tabs button[aria-current="page"]{color:var(--navy);border-bottom-color:var(--blue)}
 .tabs .count{display:inline-block;min-width:22px;padding:0 6px;margin-left:6px;border-radius:11px;background:var(--magenta);color:var(--paper);font-size:.8rem;text-align:center}
-main{max-width:1080px;margin:0 auto;padding:24px}
+main{max-width:1180px;margin:0 auto;padding:24px}
 .bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin:8px 0 14px}
 .bar h2{font-size:1.3rem;color:var(--navy)}
 h3.sub{font-size:1.05rem;color:var(--muted);margin:28px 0 10px}
+.hint{color:var(--muted)}
 .empty{background:var(--white);border:1px dashed var(--line);border-radius:var(--radius);padding:28px;text-align:center;color:var(--muted)}
 .scroll{overflow-x:auto;background:var(--white);border:1px solid var(--line);border-radius:var(--radius)}
-table{width:100%;border-collapse:collapse;min-width:620px}
+table{width:100%;border-collapse:collapse;min-width:680px}
 th,td{padding:12px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
 th{font-size:.9rem;color:var(--muted);font-weight:700;background:var(--thead)}
 tr:last-child td{border-bottom:0}td.act{text-align:right;white-space:nowrap}td small{display:block;color:var(--muted)}
@@ -51,12 +52,15 @@ button{cursor:pointer}
 .ghost:hover{border-color:var(--blue)}.ghost.sm,.primary.sm{padding:5px 10px;font-size:.92rem}.ghost.danger{color:var(--red)}
 .link{background:none;border:0;color:var(--blue);text-decoration:underline;padding:4px 0}
 input,select,textarea{width:100%;background:var(--white);border:1px solid var(--field-line);border-radius:8px;padding:10px 12px}
+input[type=checkbox]{width:auto}
 textarea{min-height:84px;resize:vertical}
 label{display:grid;gap:5px;font-weight:700}
+label.check{display:flex;gap:8px;align-items:center;font-weight:400;color:var(--muted);font-size:.92rem}
 .stack{display:grid;gap:14px}.msg{color:var(--red);min-height:1.2em;font-weight:700}
 .links{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:14px}
 .chip{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.88rem;font-weight:700}
 .chip.pending{background:var(--pend-bg);color:var(--pend-fg)}.chip.approved{background:var(--ok-bg);color:var(--ok-fg)}.chip.declined{background:var(--off-bg);color:var(--off-fg)}
+.prov{display:flex;gap:6px;align-items:center;margin-bottom:4px}
 .errbox{background:var(--banner-bg);border:1px solid var(--banner-line);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;color:var(--red);font-weight:700}
 .authwrap{min-height:100vh;display:grid;place-items:center;padding:24px;position:relative}
 .themecorner{position:absolute;top:16px;right:16px}
@@ -82,14 +86,7 @@ dialog h2{font-size:1.25rem;color:var(--navy);margin-bottom:14px}
 /* ---------- connection (the anon key is public by design; Row Level Security protects the data) ---------- */
 const SUPABASE_URL = 'https://pulbcpjwxliwnmkiyfhe.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1bGJjcGp3eGxpd25ta2l5ZmhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MDYzNDksImV4cCI6MjEwNzI4MjM0OX0.skxulb3shDKFhigAL2en1qV6ePytzTHBdBrPvW3CHl0';
-
-/* ---------- ASSUMED DATABASE LAYOUT: edit here if your tables/columns differ ----------
- profiles(id, email, full_name, role, company_id)
- companies(id, name)
- appointments(id, client_id, company_id, appt_date, appt_time, title, notes)
- assignments(id, appointment_id, staff_id)
- requests(id, client_id, requested_by, req_date, details, status)  */
-const TABLE = {profiles:'profiles', companies:'companies', appts:'appointments', assigns:'assignments', reqs:'requests'};
+const TABLE = {profiles:'profiles', companies:'companies', appts:'appointments', assigns:'provider_assignments', reqs:'change_requests'};
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const ROLE_LABEL = {admin:'Admin',coordinator:'Coordinator',provider_company:'Provider company',provider_staff:'Provider staff',client:'Client',family:'Family'};
@@ -110,11 +107,12 @@ function toast(m, err){
   clearTimeout(toast.t); toast.t = setTimeout(() => t.className = '', 4500);
 }
 const prof = id => D.profiles.find(x => x.id === id);
-const nameOf = id => { const p = prof(id); return p ? (p.full_name || p.email) : '—'; };
+const pname = p => p ? (p.full_name || p.email) : '—';
+const nameOf = id => pname(prof(id));
 const compName = id => id ? (D.companies.find(x => x.id === id)?.name || 'Provider') : '—';
 const isCoord = () => ['admin','coordinator'].includes(view.role);
 const byRole = r => D.profiles.filter(p => p.role === r);
-const opts = (list, val, label, empty) => (empty ? `<option value="">${esc(empty)}</option>` : '') + list.map(x => `<option value="${esc(x[val])}">${esc(label(x))}</option>`).join('');
+const opts = (list, val, label, empty, sel) => (empty != null ? `<option value="">${esc(empty)}</option>` : '') + list.map(x => `<option value="${esc(x[val])}"${x[val] === sel ? ' selected' : ''}>${esc(label(x))}</option>`).join('');
 const nul = v => v === '' || v == null ? null : v;
 
 /* ---------- theme ---------- */
@@ -137,24 +135,25 @@ async function loadAll(){
   }));
 }
 async function run(p, ok){
-  const {error} = await p;
+  const {data, error} = await p;
   if (error) { toast(error.message, true); return false; }
+  if (Array.isArray(data) && !data.length) { toast('Nothing changed. You may not have permission.', true); return false; }
   await loadAll(); render(); if (ok) toast(ok); return true;
 }
 
 /* ---------- boot & auth ---------- */
 const logo = `<svg class="logo" width="44" height="44" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="19" fill="none" stroke="#c8236f" stroke-width="3" stroke-dasharray="5 4"/><circle cx="22" cy="22" r="11" fill="#1f56b8"/></svg>`;
 const brand = big => `<div class="brand${big ? ' big' : ''}">${logo}<div><h1>Coordinator</h1><p class="tag">Ground Support Crew</p></div></div>`;
+const notice = (title, text, extra) => `<div class="authwrap"><div class="card auth">${brand(true)}<h2>${title}</h2><p>${text}</p>${extra || ''}<button class="ghost" data-act="signout">Sign out</button></div></div>`;
 
 async function boot(session){
   if (recovering) return renderRecovery();
   if (!session) { me = view = null; return renderAuth(); }
   await loadAll();
   me = prof(session.user.id);
-  if (!me) {
-    app.innerHTML = `<div class="authwrap"><div class="card auth">${brand(true)}<h2>Account not set up yet</h2><p>You are signed in as ${esc(session.user.email)}, but there is no profile for this account. Ask a coordinator to add you.</p>${loadErrs.length ? `<div class="errbox">${loadErrs.map(esc).join('<br>')}</div>` : ''}<button class="ghost" data-act="signout">Sign out</button></div></div>`;
-    return;
-  }
+  const errs = loadErrs.length ? `<div class="errbox">${loadErrs.map(esc).join('<br>')}</div>` : '';
+  if (!me) { app.innerHTML = notice('Account not set up yet', `You are signed in as ${esc(session.user.email)}, but there is no profile for this account. Ask a coordinator to add you.`, errs); return; }
+  if (me.approved === false && !['admin','coordinator'].includes(me.role)) { app.innerHTML = notice('Waiting for approval', 'A coordinator needs to approve your account before you can use the app. Check back soon.'); return; }
   view = me; render();
 }
 
@@ -194,96 +193,163 @@ function renderRecovery(){
 }
 
 /* ---------- main view ---------- */
+const pendReqs = () => D.reqs.filter(r => r.status === 'pending').length;
+const pendUsers = () => D.profiles.filter(p => !p.approved).length;
 function tabsFor(){
-  const pend = D.reqs.filter(r => r.status === 'pending').length;
-  const t = [['appointments','Appointments'], ['requests','Requests', isCoord() ? pend : 0]];
-  if (isCoord()) t.push(['people','People'], ['companies','Companies']);
+  const t = [['appointments','Appointments'], ['requests','Requests', isCoord() ? pendReqs() : 0]];
+  if (isCoord()) t.push(['clients','Clients'], ['people','People', pendUsers()], ['companies','Companies']);
   return t;
 }
 function render(){
   if (!me) return;
   if (!tabsFor().some(t => t[0] === tab)) tab = 'appointments';
-  const pend = D.reqs.filter(r => r.status === 'pending').length;
+  const pr = pendReqs(), pu = pendUsers();
   app.innerHTML = `<header class="top">${brand()}<div class="who">
-    ${me.role === 'admin' ? `<label class="as">View as <select data-viewas>${D.profiles.map(p => `<option value="${esc(p.id)}"${p.id===view.id?' selected':''}>${esc(p.full_name||p.email)} (${ROLE_LABEL[p.role]||p.role})</option>`).join('')}</select></label>` : ''}
-    ${themeSel()}<div class="me"><strong>${esc(nameOf(view.id))}</strong><small>${esc(ROLE_LABEL[view.role] || view.role)}</small></div>
+    ${me.role === 'admin' ? `<label class="as">View as <select data-viewas>${D.profiles.map(p => `<option value="${esc(p.id)}"${p.id===view.id?' selected':''}>${esc(pname(p))} (${ROLE_LABEL[p.role]||p.role})</option>`).join('')}</select></label>` : ''}
+    ${themeSel()}<div class="me"><strong>${esc(pname(view))}</strong><small>${esc(ROLE_LABEL[view.role] || view.role)}</small></div>
     <button class="ghost sm" data-act="signout">Sign out</button></div></header>
-    ${isCoord() && pend ? `<div class="banner"><strong>${pend} request${pend>1?'s':''} waiting for a decision.</strong><button class="link" data-tab="requests">Review requests</button></div>` : ''}
+    ${isCoord() && (pr || pu) ? `<div class="banner">${pr ? `<button class="link" data-tab="requests"><strong>${pr} request${pr>1?'s':''} to review</strong></button>` : ''}${pu ? `<button class="link" data-tab="people"><strong>${pu} ${pu>1?'people':'person'} waiting for approval</strong></button>` : ''}</div>` : ''}
     <nav class="tabs" aria-label="Sections">${tabsFor().map(([k,l,c]) => `<button data-tab="${k}"${k===tab?' aria-current="page"':''}>${l}${c ? `<span class="count">${c}</span>` : ''}</button>`).join('')}</nav>
-    <main>${loadErrs.length ? `<div class="errbox">Some data could not be loaded:<br>${loadErrs.map(esc).join('<br>')}</div>` : ''}${{appointments:viewAppts, requests:viewReqs, people:viewPeople, companies:viewCompanies}[tab]()}</main>`;
+    <main>${loadErrs.length ? `<div class="errbox">Some data could not be loaded:<br>${loadErrs.map(esc).join('<br>')}</div>` : ''}${{appointments:viewAppts, requests:viewReqs, clients:viewClients, people:viewPeople, companies:viewCompanies}[tab]()}</main>`;
 }
 
-function myAppts(){
-  const r = view.role; let a = D.appts;
-  if (r === 'client') a = a.filter(x => x.client_id === view.id);
-  else if (r === 'provider_staff') a = a.filter(x => D.assigns.some(s => s.appointment_id === x.id && s.staff_id === view.id));
-  else if (r === 'provider_company') a = a.filter(x => x.company_id === view.company_id);
-  return [...a].sort((x, y) => (x.appt_date || '').localeCompare(y.appt_date || '') || (x.appt_time || '').localeCompare(y.appt_time || ''));
+/* ----- which clients can the current view see? ----- */
+function myClientIds(){
+  const v = view;
+  if (v.role === 'client') return [v.id];
+  if (v.role === 'family') return v.linked_client ? [v.linked_client] : [];
+  if (v.role === 'provider_staff') return D.assigns.filter(a => a.staff_id === v.id).map(a => a.client_id);
+  if (v.role === 'provider_company') return D.assigns.filter(a => a.company_id === v.company_id).map(a => a.client_id);
+  return [];
 }
+function myAppts(){
+  let a = D.appts;
+  if (!isCoord()) { const ids = myClientIds(); a = a.filter(x => ids.includes(x.client_id) || (view.role === 'provider_company' && x.company_id === view.company_id)); }
+  return [...a].sort((x, y) => (x.appt_date || '').localeCompare(y.appt_date || ''));
+}
+
+/* ----- appointments ----- */
 function apptTable(list){
   if (!list.length) return '<div class="empty">Nothing here.</div>';
-  return `<div class="scroll"><table><thead><tr><th>When</th><th>Appointment</th><th>Client</th><th>Provider</th><th>Staff</th>${isCoord()?'<th></th>':''}</tr></thead><tbody>${list.map(a => {
-    const staff = D.assigns.filter(s => s.appointment_id === a.id).map(s => nameOf(s.staff_id)).join(', ') || '—';
-    return `<tr><td>${esc(fmtDate(a.appt_date))}<small>${esc((a.appt_time||'').slice(0,5))}</small></td><td><strong>${esc(a.title)}</strong>${a.notes?`<small>${esc(a.notes)}</small>`:''}</td><td>${esc(nameOf(a.client_id))}</td><td>${esc(compName(a.company_id))}</td><td>${esc(staff)}</td>${isCoord()?`<td class="act"><button class="ghost sm" data-act="assign" data-id="${esc(a.id)}">Assign staff</button> <button class="ghost sm danger" data-act="del-appt" data-id="${esc(a.id)}">Delete</button></td>`:''}</tr>`;
-  }).join('')}</tbody></table></div>`;
+  return `<div class="scroll"><table><thead><tr><th>Date</th><th>Appointment</th><th>Client</th><th>Provider</th>${isCoord()?'<th></th>':''}</tr></thead><tbody>${list.map(a => `<tr><td>${esc(fmtDate(a.appt_date))}</td><td><strong>${esc(a.title)}</strong></td><td>${esc(nameOf(a.client_id))}</td><td>${esc(compName(a.company_id))}</td>${isCoord()?`<td class="act"><button class="ghost sm" data-act="edit-appt" data-id="${esc(a.id)}">Edit</button> <button class="ghost sm danger" data-act="del-appt" data-id="${esc(a.id)}">Delete</button></td>`:''}</tr>`).join('')}</tbody></table></div>`;
 }
 function viewAppts(){
   const all = myAppts(), t = todayStr();
   const up = all.filter(a => (a.appt_date || '') >= t), past = all.filter(a => (a.appt_date || '') < t).reverse();
-  return `<div class="bar"><h2>Appointments</h2>${isCoord() ? '<button class="primary" data-act="add-appt">Add appointment</button>' : ''}</div>${apptTable(up)}${past.length ? `<h3 class="sub">Past</h3>${apptTable(past)}` : ''}`;
+  return `<div class="bar"><h2>Appointments</h2>${isCoord() ? '<button class="primary" data-act="add-appt">Add appointment</button>' : ''}${['client','family'].includes(view.role) ? '<button class="primary" data-act="add-req">Request a change</button>' : ''}</div>${apptTable(up)}${past.length ? `<h3 class="sub">Past</h3>${apptTable(past)}` : ''}`;
 }
 
+/* ----- requests ----- */
+function reqSummary(r){
+  const ap = D.appts.find(a => a.id === r.appointment_id), nm = ap ? ap.title : 'appointment';
+  if (r.action === 'add') return `Add: ${r.title} on ${fmtDate(r.appt_date)}`;
+  if (r.action === 'edit') return `Change "${nm}" to: ${r.title} on ${fmtDate(r.appt_date)}`;
+  return `Remove "${nm}"${ap ? ' on ' + fmtDate(ap.appt_date) : ''}`;
+}
 function viewReqs(){
-  let list = isCoord() ? D.reqs : D.reqs.filter(r => r.requested_by === view.id || r.client_id === view.id);
-  list = [...list].sort((a, b) => (b.req_date || '').localeCompare(a.req_date || ''));
-  const canAsk = ['client','family','admin','coordinator'].includes(view.role);
-  return `<div class="bar"><h2>Requests</h2>${canAsk ? '<button class="primary" data-act="add-req">New request</button>' : ''}</div>${!list.length ? '<div class="empty">No requests yet.</div>' : `<div class="scroll"><table><thead><tr><th>Date wanted</th><th>Details</th><th>Client</th><th>Status</th>${isCoord()?'<th></th>':''}</tr></thead><tbody>${list.map(r => `<tr><td>${esc(fmtDate(r.req_date))}</td><td>${esc(r.details)}<small>Asked by ${esc(nameOf(r.requested_by))}</small></td><td>${esc(nameOf(r.client_id))}</td><td><span class="chip ${esc(r.status)}">${esc(r.status)}</span></td>${isCoord()?`<td class="act">${r.status==='pending'?`<button class="primary sm" data-act="req-set" data-id="${esc(r.id)}" data-s="approved">Approve</button> <button class="ghost sm" data-act="req-set" data-id="${esc(r.id)}" data-s="declined">Decline</button>`:''}</td>`:''}</tr>`).join('')}</tbody></table></div>`}`;
+  const ids = myClientIds();
+  let list = isCoord() ? D.reqs : D.reqs.filter(r => r.requested_by === view.id || ids.includes(r.client_id));
+  list = [...list].sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+  return `<div class="bar"><h2>Requests</h2>${['client','family'].includes(view.role) ? '<button class="primary" data-act="add-req">New request</button>' : ''}</div>${!list.length ? '<div class="empty">No requests yet.</div>' : `<div class="scroll"><table><thead><tr><th>Sent</th><th>Request</th><th>Client</th><th>From</th><th>Status</th>${isCoord()?'<th></th>':''}</tr></thead><tbody>${list.map(r => `<tr><td>${esc(r.created_at ? new Date(r.created_at).toLocaleDateString() : '')}</td><td>${esc(reqSummary(r))}${r.note ? `<small>${esc(r.note)}</small>` : ''}</td><td>${esc(nameOf(r.client_id))}</td><td>${esc(r.requester_name || nameOf(r.requested_by))}<small>${esc(ROLE_LABEL[r.requester_role] || '')}</small></td><td><span class="chip ${esc(r.status)}">${esc(r.status)}</span>${r.review_note ? `<small>${esc(r.review_note)}</small>` : ''}</td>${isCoord() ? `<td class="act">${r.status === 'pending' ? `<button class="primary sm" data-act="review" data-id="${esc(r.id)}">Review</button>` : ''}</td>` : ''}</tr>`).join('')}</tbody></table></div>`}`;
 }
 
+/* ----- clients ----- */
+function viewClients(){
+  const t = todayStr(), L = byRole('client');
+  return `<div class="bar"><h2>Clients</h2></div>${!L.length ? '<div class="empty">No clients yet. When someone signs up, set their role to Client in People.</div>' : `<div class="scroll"><table><thead><tr><th>Client</th><th>Family</th><th>Providers</th><th>Next appointment</th><th>Requests</th><th></th></tr></thead><tbody>${L.map(c => {
+    const up = D.appts.filter(a => a.client_id === c.id && (a.appt_date || '') >= t).sort((x, y) => (x.appt_date || '').localeCompare(y.appt_date || ''));
+    const pend = D.reqs.filter(r => r.client_id === c.id && r.status === 'pending').length;
+    const fam = D.profiles.filter(p => p.linked_client === c.id).map(pname).join(', ') || '—';
+    const provs = D.assigns.filter(a => a.client_id === c.id).map(a => `<div class="prov"><span>${esc(a.service)} · ${esc(compName(a.company_id))} · ${esc(nameOf(a.staff_id))}</span><button class="ghost sm danger" data-act="del-prov" data-id="${esc(a.id)}" aria-label="Remove provider">×</button></div>`).join('') || '—';
+    return `<tr><td><strong>${esc(pname(c))}</strong><small>${esc(c.email)}</small></td><td>${esc(fam)}</td><td>${provs}</td><td>${up.length ? `${esc(fmtDate(up[0].appt_date))}<small>${esc(up[0].title)} · ${up.length} upcoming</small>` : '—'}</td><td>${pend ? `<span class="chip pending">${pend} pending</span>` : '—'}</td><td class="act"><button class="ghost sm" data-act="add-appt" data-client="${esc(c.id)}">Add appointment</button> <button class="ghost sm" data-act="add-prov" data-client="${esc(c.id)}">Add provider</button></td></tr>`;
+  }).join('')}</tbody></table></div>`}`;
+}
+
+/* ----- people ----- */
 function viewPeople(){
-  const canEdit = me.role === 'admin';
-  return `<div class="bar"><h2>People</h2></div>${ORDER.map(r => {
+  const roles = ORDER.filter(o => o !== 'admin' || me.role === 'admin');
+  const body = ORDER.map(r => {
     const L = byRole(r); if (!L.length) return '';
-    return `<h3 class="sub">${ROLE_PLURAL[r]}</h3><div class="scroll"><table><thead><tr><th>Name</th><th>Email</th><th>Provider</th><th>Role</th></tr></thead><tbody>${L.map(p => `<tr><td>${esc(p.full_name||'—')}</td><td>${esc(p.email)}</td><td>${canEdit && ['provider_staff','provider_company'].includes(p.role) ? `<select data-pcomp="${esc(p.id)}">${opts(D.companies,'id',c=>c.name,'None')}</select>`.replace(`value="${p.company_id}"`, `value="${p.company_id}" selected`) : esc(compName(p.company_id))}</td><td>${canEdit ? `<select data-prole="${esc(p.id)}">${ORDER.map(o => `<option value="${o}"${o===p.role?' selected':''}>${ROLE_LABEL[o]}</option>`).join('')}</select>` : esc(ROLE_LABEL[p.role])}</td></tr>`).join('')}</tbody></table></div>`;
-  }).join('') || '<div class="empty">No people yet.</div>'}`;
+    return `<h3 class="sub">${ROLE_PLURAL[r]}</h3><div class="scroll"><table><thead><tr><th>Name</th><th>Email</th><th>Access</th><th>Role</th><th>Linked to</th></tr></thead><tbody>${L.map(p => `<tr>
+      <td>${esc(p.full_name || '—')}${['client','family'].includes(p.role) ? `<label class="check"><input type="checkbox" data-prep="${esc(p.id)}"${p.is_representative ? ' checked' : ''}> Representative</label>` : ''}</td>
+      <td>${esc(p.email)}</td>
+      <td>${p.approved ? '<span class="chip approved">Approved</span>' : `<button class="primary sm" data-act="approve-user" data-id="${esc(p.id)}">Approve</button>`}</td>
+      <td>${p.role === 'admin' && me.role !== 'admin' ? 'Admin' : `<select data-prole="${esc(p.id)}" aria-label="Role">${roles.map(o => `<option value="${o}"${o === p.role ? ' selected' : ''}>${ROLE_LABEL[o]}</option>`).join('')}</select>`}</td>
+      <td>${p.role === 'family' ? `<select data-plink="${esc(p.id)}" aria-label="Linked client">${opts(byRole('client'), 'id', pname, 'No client', p.linked_client)}</select>` : ['provider_staff','provider_company'].includes(p.role) ? `<select data-pcomp="${esc(p.id)}" aria-label="Company">${opts(D.companies, 'id', c => c.name, 'No company', p.company_id)}</select>` : '—'}</td></tr>`).join('')}</tbody></table></div>`;
+  }).join('');
+  return `<div class="bar"><h2>People</h2></div>${body || '<div class="empty">No people yet.</div>'}`;
 }
 
+/* ----- companies ----- */
 function viewCompanies(){
-  return `<div class="bar"><h2>Provider companies</h2><button class="primary" data-act="add-comp">Add company</button></div>${!D.companies.length ? '<div class="empty">No companies yet.</div>' : `<div class="scroll"><table><thead><tr><th>Name</th><th>Staff</th><th></th></tr></thead><tbody>${D.companies.map(c => `<tr><td><strong>${esc(c.name)}</strong></td><td>${esc(D.profiles.filter(p=>p.company_id===c.id).map(p=>p.full_name||p.email).join(', ')||'—')}</td><td class="act"><button class="ghost sm danger" data-act="del-comp" data-id="${esc(c.id)}">Delete</button></td></tr>`).join('')}</tbody></table></div>`}`;
+  return `<div class="bar"><h2>Provider companies</h2><button class="primary" data-act="add-comp">Add company</button></div>${!D.companies.length ? '<div class="empty">No companies yet.</div>' : `<div class="scroll"><table><thead><tr><th>Name</th><th>Staff</th><th></th></tr></thead><tbody>${D.companies.map(c => `<tr><td><strong>${esc(c.name)}</strong></td><td>${esc(D.profiles.filter(p => p.company_id === c.id).map(pname).join(', ') || '—')}</td><td class="act"><button class="ghost sm danger" data-act="del-comp" data-id="${esc(c.id)}">Delete</button></td></tr>`).join('')}</tbody></table></div>`}`;
 }
 
 /* ---------- dialogs & actions ---------- */
-function openDlg(title, body, submit){
-  dlg.innerHTML = `<h2 id="dlgTitle">${esc(title)}</h2><form id="df" class="stack">${body}<div class="row-end"><button type="button" class="ghost" data-act="close">Cancel</button><button class="primary">Save</button></div></form>`;
+function openDlg(title, body, submit, btns){
+  dlg.innerHTML = `<h2 id="dlgTitle">${esc(title)}</h2><form id="df" class="stack">${body}<div class="row-end"><button type="button" class="ghost" data-act="close">Cancel</button>${btns || '<button class="primary">Save</button>'}</div></form>`;
   document.getElementById('df').onsubmit = async e => {
     e.preventDefault();
-    if (await submit(Object.fromEntries(new FormData(e.target)))) dlg.close();
+    const f = Object.fromEntries(new FormData(e.target)); f._s = e.submitter?.value;
+    if (await submit(f)) dlg.close();
   };
   dlg.showModal();
 }
+async function review(r, status, note){
+  if (status === 'approved') {
+    const A = sb.from(TABLE.appts); let q;
+    if (r.action === 'add') q = A.insert({client_id:r.client_id, title:r.title, appt_date:r.appt_date, company_id:r.company_id, created_by:me.id});
+    else if (r.action === 'edit') { const u = {title:r.title, appt_date:r.appt_date}; if (r.company_id) u.company_id = r.company_id; q = A.update(u).eq('id', r.appointment_id).select(); }
+    else q = A.delete().eq('id', r.appointment_id).select();
+    const {data, error} = await q;
+    if (error) { toast(error.message, true); return false; }
+    if (Array.isArray(data) && !data.length) { toast('The appointment was not changed. You may not have permission.', true); return false; }
+  }
+  return run(sb.from(TABLE.reqs).update({status, review_note:nul(note), reviewed_by:me.id, reviewed_at:new Date().toISOString()}).eq('id', r.id).select(), 'Request ' + status + '.');
+}
+const clientOpts = sel => opts(byRole('client'), 'id', pname, 'Choose a client', sel);
 const ACT = {
   signout: async () => { await sb.auth.signOut(); },
   close: () => dlg.close(),
-  'add-appt': () => openDlg('Add appointment', `
-    <label>Client<select name="client_id" required>${opts(byRole('client'),'id',p=>p.full_name||p.email,'Choose a client')}</select></label>
-    <label>Title<input name="title" required></label>
+  'add-appt': d => openDlg('Add appointment', `
+    <label>Client<select name="client_id" required>${clientOpts(d.client)}</select></label>
+    <label>Title<input name="title" required maxlength="200"></label>
     <label>Date<input name="appt_date" type="date" required value="${todayStr()}"></label>
-    <label>Time<input name="appt_time" type="time"></label>
-    <label>Provider company<select name="company_id">${opts(D.companies,'id',c=>c.name,'None yet')}</select></label>
-    <label>Notes<textarea name="notes"></textarea></label>`,
-    f => run(sb.from(TABLE.appts).insert({client_id:f.client_id, title:f.title, appt_date:f.appt_date, appt_time:nul(f.appt_time), company_id:nul(f.company_id), notes:nul(f.notes)}), 'Appointment added.')),
-  assign: d => openDlg('Assign staff', `<label>Staff member<select name="staff_id" required>${opts(byRole('provider_staff'),'id',p=>p.full_name||p.email,'Choose staff')}</select></label>`,
-    f => run(sb.from(TABLE.assigns).insert({appointment_id:d.id, staff_id:f.staff_id}), 'Staff assigned.')),
-  'del-appt': d => confirm('Delete this appointment?') && run(sb.from(TABLE.appts).delete().eq('id', d.id), 'Appointment deleted.'),
-  'add-req': () => openDlg('New request', `
-    ${['client'].includes(view.role) ? '' : `<label>For client<select name="client_id" required>${opts(byRole('client'),'id',p=>p.full_name||p.email,'Choose a client')}</select></label>`}
-    <label>Date wanted<input name="req_date" type="date" required value="${todayStr()}"></label>
-    <label>Details<textarea name="details" required></textarea></label>`,
-    f => run(sb.from(TABLE.reqs).insert({client_id:view.role==='client'?view.id:f.client_id, requested_by:me.id, req_date:f.req_date, details:f.details, status:'pending'}), 'Request sent.')),
-  'req-set': d => run(sb.from(TABLE.reqs).update({status:d.s}).eq('id', d.id), 'Request ' + d.s + '.'),
-  'add-comp': () => openDlg('Add provider company', '<label>Company name<input name="name" required></label>',
+    <label>Provider company<select name="company_id">${opts(D.companies, 'id', c => c.name, 'None')}</select></label>`,
+    f => run(sb.from(TABLE.appts).insert({client_id:f.client_id, title:f.title, appt_date:f.appt_date, company_id:nul(f.company_id), created_by:me.id}), 'Appointment added.')),
+  'edit-appt': d => { const a = D.appts.find(x => x.id === d.id); openDlg('Edit appointment', `
+    <label>Title<input name="title" required maxlength="200" value="${esc(a.title)}"></label>
+    <label>Date<input name="appt_date" type="date" required value="${esc(a.appt_date)}"></label>
+    <label>Provider company<select name="company_id">${opts(D.companies, 'id', c => c.name, 'None', a.company_id)}</select></label>`,
+    f => run(sb.from(TABLE.appts).update({title:f.title, appt_date:f.appt_date, company_id:nul(f.company_id)}).eq('id', a.id).select(), 'Appointment updated.')); },
+  'del-appt': d => confirm('Delete this appointment?') && run(sb.from(TABLE.appts).delete().eq('id', d.id).select(), 'Appointment deleted.'),
+  'add-req': () => {
+    const cid = view.role === 'client' ? view.id : view.linked_client;
+    if (!cid) return toast('Ask a coordinator to link your account to a client first.', true);
+    const mine = D.appts.filter(a => a.client_id === cid);
+    openDlg('New request', `
+      <label>What do you need?<select name="action" data-reqaction><option value="add">Add an appointment</option><option value="edit">Change an appointment</option><option value="remove">Remove an appointment</option></select></label>
+      <label data-needappt hidden>Which appointment<select name="appointment_id">${opts(mine, 'id', a => fmtDate(a.appt_date) + ' · ' + a.title, 'Choose one')}</select></label>
+      <div class="stack" data-needdetails>
+        <label>Title<input name="title" required maxlength="200"></label>
+        <label>Date<input name="appt_date" type="date" required value="${todayStr()}"></label>
+        <label>Provider company<select name="company_id">${opts(D.companies, 'id', c => c.name, 'No preference')}</select></label>
+      </div>
+      <label>Note<textarea name="note" maxlength="1000"></textarea></label>`,
+      f => { const rm = f.action === 'remove'; return run(sb.from(TABLE.reqs).insert({client_id:cid, appointment_id:f.action === 'add' ? null : nul(f.appointment_id), action:f.action, title:rm ? null : f.title, appt_date:rm ? null : f.appt_date, company_id:rm ? null : nul(f.company_id), note:nul(f.note), requested_by:me.id, requester_name:pname(me), requester_role:me.role, status:'pending'}), 'Request sent.'); });
+  },
+  review: d => { const r = D.reqs.find(x => x.id === d.id); openDlg('Review request', `<p><strong>${esc(reqSummary(r))}</strong></p><p class="hint">For ${esc(nameOf(r.client_id))}, asked by ${esc(r.requester_name || nameOf(r.requested_by))}.${r.note ? ' Note: ' + esc(r.note) : ''}</p><label>Note to requester (optional)<textarea name="review_note"></textarea></label>`,
+    f => review(r, f._s, f.review_note), '<button type="submit" value="declined" class="ghost">Decline</button><button type="submit" value="approved" class="primary">Approve</button>'); },
+  'approve-user': d => run(sb.from(TABLE.profiles).update({approved:true}).eq('id', d.id).select(), 'Approved.'),
+  'add-prov': d => openDlg('Add provider for ' + nameOf(d.client), `
+    <label>Service<input name="service" required maxlength="100"></label>
+    <label>Company<select name="company_id" required>${opts(D.companies, 'id', c => c.name, 'Choose a company')}</select></label>
+    <label>Staff member<select name="staff_id" required>${opts(byRole('provider_staff'), 'id', p => pname(p) + ' (' + compName(p.company_id) + ')', 'Choose staff')}</select></label>`,
+    f => run(sb.from(TABLE.assigns).insert({client_id:d.client, service:f.service, company_id:f.company_id, staff_id:f.staff_id}), 'Provider added.')),
+  'del-prov': d => confirm('Remove this provider from the client?') && run(sb.from(TABLE.assigns).delete().eq('id', d.id).select(), 'Provider removed.'),
+  'add-comp': () => openDlg('Add provider company', '<label>Company name<input name="name" required maxlength="200"></label>',
     f => run(sb.from(TABLE.companies).insert({name:f.name}), 'Company added.')),
-  'del-comp': d => confirm('Delete this company?') && run(sb.from(TABLE.companies).delete().eq('id', d.id), 'Company deleted.')
+  'del-comp': d => confirm('Delete this company?') && run(sb.from(TABLE.companies).delete().eq('id', d.id).select(), 'Company deleted.')
 };
 document.addEventListener('click', e => {
   const a = e.target.closest('[data-act]'); if (a) return ACT[a.dataset.act]?.(a.dataset);
@@ -291,16 +357,26 @@ document.addEventListener('click', e => {
   const m = e.target.closest('[data-mode]'); if (m) { authMode = m.dataset.mode; renderAuth(); }
 });
 document.addEventListener('change', e => {
-  const s = e.target;
+  const s = e.target, P = TABLE.profiles;
   if (s.matches('[data-themesel]')) setTheme(s.value);
   else if (s.matches('[data-viewas]')) { view = prof(s.value) || me; tab = 'appointments'; render(); }
-  else if (s.dataset.prole) run(sb.from(TABLE.profiles).update({role:s.value}).eq('id', s.dataset.prole), 'Role updated.');
-  else if (s.dataset.pcomp) run(sb.from(TABLE.profiles).update({company_id:nul(s.value)}).eq('id', s.dataset.pcomp), 'Provider updated.');
+  else if (s.matches('[data-reqaction]')) {
+    const f = s.form, v = s.value;
+    f.querySelector('[data-needappt]').hidden = v === 'add';
+    f.querySelector('[name=appointment_id]').required = v !== 'add';
+    f.querySelector('[data-needdetails]').hidden = v === 'remove';
+    f.querySelector('[name=title]').required = v !== 'remove';
+    f.querySelector('[name=appt_date]').required = v !== 'remove';
+  }
+  else if (s.dataset.prole) run(sb.from(P).update({role:s.value}).eq('id', s.dataset.prole).select(), 'Role updated.');
+  else if (s.dataset.pcomp) run(sb.from(P).update({company_id:nul(s.value)}).eq('id', s.dataset.pcomp).select(), 'Company updated.');
+  else if (s.dataset.plink) run(sb.from(P).update({linked_client:nul(s.value)}).eq('id', s.dataset.plink).select(), 'Linked.');
+  else if (s.dataset.prep) run(sb.from(P).update({is_representative:s.checked}).eq('id', s.dataset.prep).select(), 'Updated.');
 });
 
 /* ---------- never a blank page: show any error on screen ---------- */
 function fatal(msg){
-  if (app.children.length > 1 || !/Loading/.test(app.textContent)) { toast(msg, true); return; }
+  if (!/Loading/.test(app.textContent)) { toast(msg, true); return; }
   app.innerHTML = `<div class="authwrap"><div class="card auth"><h2>Something went wrong</h2><div class="errbox">${esc(msg)}</div><button class="ghost" onclick="location.reload()">Reload</button></div></div>`;
 }
 addEventListener('error', e => fatal(e.message));
