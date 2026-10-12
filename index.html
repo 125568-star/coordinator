@@ -18,7 +18,12 @@ document.documentElement.dataset.theme=d?'dark':'light';})();
 :root[data-theme="dark"]{--navy:#d3e0ff;--blue:#3a72d8;--blue-hover:#2f63c4;--magenta:#ff6fae;--paper:#0d1424;--ink:#e8ecf7;--muted:#9eaacb;--line:#2a3658;--white:#16203a;--red:#ff8a80;--field-line:#40507a;--thead:#1a2644;--dash:rgba(255,111,174,.45);--banner-bg:#2a1830;--banner-line:#5a2a4c;--pend-bg:#4a3a10;--pend-fg:#ffdc82;--ok-bg:#143d28;--ok-fg:#8fe0ae;--off-bg:#26314f;--off-fg:#b7c2e0;--toast-bg:#d3e0ff;--toast-fg:#0d1424;color-scheme:dark}
 *{box-sizing:border-box}[hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.5 "Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{margin:0;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;background:var(--paper);color:var(--ink);font:17px/1.5 "Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+#app{flex:1}
+.themefooter{display:flex;align-items:center;justify-content:center;gap:24px;padding:20px 16px 24px;text-align:center}
+.themefooter button{border:0;background:none;color:var(--muted);padding:4px 2px;text-decoration:underline;text-underline-offset:4px;cursor:pointer}
+.themefooter button[aria-pressed="true"]{color:var(--ink);font-weight:700;text-decoration-thickness:2px}
+.themefooter button:hover{color:var(--blue)}
 h1,h2,h3,p{margin:0}button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:3px solid var(--magenta);outline-offset:2px}
 .brand{display:flex;align-items:center;gap:14px}.brand svg{flex:none}
@@ -78,6 +83,7 @@ dialog h2{font-size:1.25rem;color:var(--navy);margin-bottom:14px}
 </head>
 <body>
 <div id="app"><p style="padding:24px">Loading…</p></div>
+<footer class="themefooter" aria-label="Appearance"><button type="button" data-theme-choice="dark">Dark</button><button type="button" data-theme-choice="light">Light</button><button type="button" data-theme-choice="auto">System</button></footer>
 <dialog id="dlg" aria-labelledby="dlgTitle"></dialog>
 <div id="toast" role="status" aria-live="polite"></div>
 
@@ -122,9 +128,9 @@ function applyTheme(){
   const dark = p === 'dark' || (p === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';
 }
-function setTheme(p){ try { localStorage.setItem('gsc_theme', p); } catch(e){} applyTheme(); }
+function setTheme(p){ try { localStorage.setItem('gsc_theme', p); } catch(e){} applyTheme(); syncThemeFooter(); }
+function syncThemeFooter(){ document.querySelectorAll('[data-theme-choice]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.themeChoice === themePref()))); }
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (themePref() === 'auto') applyTheme(); });
-const themeSel = () => `<select class="themesel" data-themesel aria-label="Theme">${[['auto','Match device'],['light','Light'],['dark','Dark']].map(([v,l]) => `<option value="${v}"${themePref()===v?' selected':''}>${l}</option>`).join('')}</select>`;
 
 /* ---------- data ---------- */
 async function loadAll(){
@@ -159,7 +165,7 @@ async function boot(session){
 
 function renderAuth(){
   const t = {signin:'Sign in', signup:'Create account', forgot:'Reset password'}[authMode];
-  app.innerHTML = `<div class="authwrap"><div class="themecorner">${themeSel()}</div><div class="card auth">${brand(true)}<h2>${t}</h2>
+  app.innerHTML = `<div class="authwrap"><div class="card auth">${brand(true)}<h2>${t}</h2>
   <form id="af" class="stack">
   ${authMode === 'signup' ? '<label>Full name<input name="name" required autocomplete="name"></label>' : ''}
   <label>Email<input name="email" type="email" required autocomplete="email"></label>
@@ -206,7 +212,7 @@ function render(){
   const pr = pendReqs(), pu = pendUsers();
   app.innerHTML = `<header class="top">${brand()}<div class="who">
     ${me.role === 'admin' ? `<label class="as">View as <select data-viewas>${D.profiles.map(p => `<option value="${esc(p.id)}"${p.id===view.id?' selected':''}>${esc(pname(p))} (${ROLE_LABEL[p.role]||p.role})</option>`).join('')}</select></label>` : ''}
-    ${themeSel()}<div class="me"><strong>${esc(pname(view))}</strong><small>${esc(ROLE_LABEL[view.role] || view.role)}</small></div>
+    <div class="me"><strong>${esc(pname(view))}</strong><small>${esc(ROLE_LABEL[view.role] || view.role)}</small></div>
     <button class="ghost sm" data-act="signout">Sign out</button></div></header>
     ${isCoord() && (pr || pu) ? `<div class="banner">${pr ? `<button class="link" data-tab="requests"><strong>${pr} request${pr>1?'s':''} to review</strong></button>` : ''}${pu ? `<button class="link" data-tab="people"><strong>${pu} ${pu>1?'people':'person'} waiting for approval</strong></button>` : ''}</div>` : ''}
     <nav class="tabs" aria-label="Sections">${tabsFor().map(([k,l,c]) => `<button data-tab="${k}"${k===tab?' aria-current="page"':''}>${l}${c ? `<span class="count">${c}</span>` : ''}</button>`).join('')}</nav>
@@ -352,14 +358,14 @@ const ACT = {
   'del-comp': d => confirm('Delete this company?') && run(sb.from(TABLE.companies).delete().eq('id', d.id).select(), 'Company deleted.')
 };
 document.addEventListener('click', e => {
+  const choice = e.target.closest('[data-theme-choice]'); if (choice) { setTheme(choice.dataset.themeChoice); return; }
   const a = e.target.closest('[data-act]'); if (a) return ACT[a.dataset.act]?.(a.dataset);
   const t = e.target.closest('[data-tab]'); if (t) { tab = t.dataset.tab; render(); return; }
   const m = e.target.closest('[data-mode]'); if (m) { authMode = m.dataset.mode; renderAuth(); }
 });
 document.addEventListener('change', e => {
   const s = e.target, P = TABLE.profiles;
-  if (s.matches('[data-themesel]')) setTheme(s.value);
-  else if (s.matches('[data-viewas]')) { view = prof(s.value) || me; tab = 'appointments'; render(); }
+  if (s.matches('[data-viewas]')) { view = prof(s.value) || me; tab = 'appointments'; render(); }
   else if (s.matches('[data-reqaction]')) {
     const f = s.form, v = s.value;
     f.querySelector('[data-needappt]').hidden = v === 'add';
@@ -384,6 +390,7 @@ addEventListener('unhandledrejection', e => fatal(e.reason?.message || String(e.
 
 /* ---------- start ---------- */
 applyTheme();
+syncThemeFooter();
 sb.auth.onAuthStateChange((ev, session) => {
   if (ev === 'PASSWORD_RECOVERY') recovering = true;
   if (ev === 'INITIAL_SESSION' || ev === 'SIGNED_IN' || ev === 'SIGNED_OUT' || ev === 'PASSWORD_RECOVERY') setTimeout(() => boot(session), 0);
