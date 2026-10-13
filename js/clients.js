@@ -41,10 +41,11 @@ function clientAvatar(c){
 }
 function viewClients(){
   if (selectedClient) return clientEditor();
+  if (location.pathname.endsWith('/client.html')) return viewClientProfile();
   const records=[...D.clientRecords].sort((a,b)=>a.full_name.localeCompare(b.full_name));
   const directory = records.length ?
     '<div class="scroll"><table><thead><tr><th>Client</th><th>Age</th><th>Contact</th><th>Coordinator</th><th></th></tr></thead><tbody>'+
-      records.map(c=>'<tr><td><span class="client-identity">'+clientAvatar(c)+'<button class="link" data-act="open-client" data-id="'+esc(c.id)+'"><strong>'+esc(c.full_name)+'</strong></button></span></td><td>'+ageFor(c.date_of_birth)+'</td><td>'+esc(c.email||c.phone||'—')+'</td><td>'+esc(coordinatorName(c))+'</td><td class="act"><button class="ghost sm" data-act="open-client" data-id="'+esc(c.id)+'">View / Edit</button></td></tr>').join('')+
+      records.map(c=>'<tr><td><span class="client-identity">'+clientAvatar(c)+'<a class="link" href="./client.html?id='+encodeURIComponent(c.id)+'"><strong>'+esc(c.full_name)+'</strong></a></span></td><td>'+ageFor(c.date_of_birth)+'</td><td>'+esc(c.email||c.phone||'—')+'</td><td>'+esc(coordinatorName(c))+'</td><td class="act"><a class="ghost sm client-open" href="./client.html?id='+encodeURIComponent(c.id)+'">Open</a></td></tr>').join('')+
     '</tbody></table></div>' : '<div class="empty">No clients yet. Select Add Client to get started.</div>';
   const accountClients=byRole('client');
   const accounts = !accountClients.length ? '' :
@@ -67,4 +68,55 @@ async function saveClientRecord(form){
   if (error||!data?.length) { form.querySelector('#client-error').textContent=error?.message||'Unable to save client.'; return; }
   selectedClient=id||data[0].id;
   await loadAll(); render(); toast(id?'Client updated.':'Client added.');
+}
+
+
+/* Dedicated per-client page. Today's date is shown in the account's local state timezone. */
+function clientDayISO(d){return d.toISOString().slice(0,10);}
+function clientWeekDates(today){
+  const date=new Date(Date.UTC(today.year,today.month-1,today.day));
+  const monday=new Date(date.getTime()-((date.getUTCDay()+6)%7)*86400000);
+  return Array.from({length:7},(_,i)=>new Date(monday.getTime()+86400000*i));
+}
+function clientAppointmentTime(t){
+  if(!t)return 'Not set';
+  const [hours,minutes]=t.split(':').map(Number);
+  const hh=(hours%12)||12;
+  return hh+':'+String(minutes).padStart(2,'0')+(hours>=12?' pm':' am');
+}
+function viewClientProfile(){
+  const id=new URLSearchParams(location.search).get('id');
+  const client=D.clientRecords.find(c=>c.id===id);
+  if(!client) return `<div class="bar"><h2>Client not found</h2><a class="ghost sm client-open" href="./clients.html">Back to Clients</a></div><div class="empty">Select a client from the client directory.</div>`;
+  const today=localToday(STATE_TIMEZONES[dashboardPrefs?.state]||'Australia/Brisbane');
+  const dates=clientWeekDates(today);
+  const start=clientDayISO(dates[0]),end=clientDayISO(dates[6]);
+  const todayISO=[today.year,String(today.month).padStart(2,'0'),String(today.day).padStart(2,'0')].join('-');
+  const appointments=(D.recordAppts||[]).filter(a=>a.client_record_id===id&&a.appt_date>=start&&a.appt_date<=end)
+    .sort((a,b)=>a.appt_date.localeCompare(b.appt_date)||String(a.appt_time||'').localeCompare(String(b.appt_time||'')));
+  const label=d=>new Intl.DateTimeFormat('en-AU',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).format(d);
+  const dateLabel=iso=>new Intl.DateTimeFormat('en-AU',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(iso+'T12:00:00Z'));
+  const weekCells=dates.map(d=>{
+    const iso=clientDayISO(d),current=iso===todayISO;
+    const count=appointments.filter(a=>a.appt_date===iso).length;
+    return `<div class="client-week-day${current?' client-week-today':''}" ${current?'aria-current="date"':''}>
+      <small>${new Intl.DateTimeFormat('en-AU',{weekday:'short',timeZone:'UTC'}).format(d)}</small>
+      <strong>${d.getUTCDate()}</strong><span class="client-week-count">${count?count+' appt'+(count===1?'':'s'):'—'}</span>
+    </div>`;
+  }).join('');
+  const rows=appointments.map(a=>`<tr>
+    <td>${esc(dateLabel(a.appt_date))}</td><td>${esc(clientAppointmentTime(a.appt_time))}</td>
+    <td><strong>${esc(a.title)}</strong>${a.notes?'<small>'+esc(a.notes)+'</small>':''}</td>
+    <td>${a.is_example?'<span class="chip pending">Example</span>':'<span class="chip approved">Scheduled</span>'}</td>
+  </tr>`).join('');
+  return `<div class="bar"><h2>Client details</h2><a href="./clients.html" class="ghost sm client-open">Back to Clients</a></div>
+  <section class="client-profile-heading">${clientAvatar(client)}<div><h3>${esc(client.full_name)}</h3><p class="hint">Coordinator: ${esc(coordinatorName(client))}</p></div>
+  <button class="ghost sm" data-act="open-client" data-id="${esc(client.id)}">Edit details</button></section>
+  <section class="client-week-card">
+   <div class="client-week-heading"><div><h3>This week</h3><p class="hint">${esc(label(dates[0]))} – ${esc(label(dates[6]))}</p></div>
+     <span class="chip approved">Today: ${esc(dateLabel(todayISO))}</span></div>
+   <div class="client-week-grid" aria-label="Current week">${weekCells}</div>
+   <div class="client-appointments-heading"><h3>Appointments this week</h3><span class="chip approved">${appointments.length} appointment${appointments.length===1?'':'s'}</span></div>
+   ${appointments.length?`<div class="scroll"><table class="client-appointments-table"><thead><tr><th>Date</th><th>Time</th><th>Appointment</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="empty">No appointments for this week.</div>'}
+  </section>`;
 }
