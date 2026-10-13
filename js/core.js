@@ -1,7 +1,7 @@
 /* ---------- connection (the anon key is public by design; Row Level Security protects the data) ---------- */
 const SUPABASE_URL = 'https://pulbcpjwxliwnmkiyfhe.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1bGJjcGp3eGxpd25ta2l5ZmhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MDYzNDksImV4cCI6MjEwNzI4MjM0OX0.skxulb3shDKFhigAL2en1qV6ePytzTHBdBrPvW3CHl0';
-const TABLE = {profiles:'profiles', companies:'companies', appts:'appointments', assigns:'provider_assignments', reqs:'change_requests', clientRecords:'client_records'};
+const TABLE = {profiles:'profiles', companies:'companies', appts:'appointments', assigns:'provider_assignments', reqs:'change_requests', clientRecords:'client_records',recordAppts:'client_record_appointments'};
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const ROLE_LABEL = {admin:'Admin',coordinator:'Coordinator',provider_company:'Provider company',provider_staff:'Provider staff',client:'Client',family:'Family'};
@@ -10,7 +10,7 @@ const ORDER = ['admin','coordinator','provider_company','provider_staff','client
 const app = document.getElementById('app'), dlg = document.getElementById('dlg');
 let me = null, view = null, tab = document.body.dataset.page || 'dashboard', authMode = 'signin', loadErrs = [];
 const TAB_PATH = {dashboard:'dashboard.html',appointments:'calendar.html',requests:'requests.html',clients:'clients.html',people:'people.html',companies:'companies.html'};
-let D = {profiles:[],companies:[],appts:[],assigns:[],reqs:[],clientRecords:[]};
+let D = {profiles:[],companies:[],appts:[],assigns:[],reqs:[],clientRecords:[],recordAppts:[]};
 let selectedClient = null;
 let recovering = /type=recovery/.test(location.hash);
 
