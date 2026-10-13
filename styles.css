@@ -182,3 +182,13 @@ a.client-open{display:inline-flex;align-items:center;text-decoration:none}
 .dash-client-table-link:hover{text-decoration:underline}
 .dash-client-table-link .client-avatar{width:36px;height:36px}
 .dash-all-clients-table td{vertical-align:middle}
+
+
+/* Selected day is shaded; today's date keeps a separate outline, even when not selected. */
+.dash-selectable-day{font:inherit;color:var(--ink);width:100%;cursor:pointer;transition:background-color .12s ease;appearance:none}
+.dash-selectable-day:hover{background:var(--off-bg)}
+.dash-selectable-day.dash-day-selected{background:var(--navy);color:var(--white);border-color:var(--navy)}
+.dash-selectable-day.dash-day-selected small,.dash-selectable-day.dash-day-selected .client-week-count{color:var(--white)}
+.dash-selectable-day.client-week-today{outline:2px solid var(--blue);outline-offset:-2px;border:1px solid var(--line)}
+.dash-selectable-day.dash-day-selected.client-week-today{border-color:var(--navy);outline:2px solid var(--blue);outline-offset:2px}
+.dash-selectable-day:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
