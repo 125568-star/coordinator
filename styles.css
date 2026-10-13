@@ -192,3 +192,17 @@ a.client-open{display:inline-flex;align-items:center;text-decoration:none}
 .dash-selectable-day.client-week-today{outline:2px solid var(--blue);outline-offset:-2px;border:1px solid var(--line)}
 .dash-selectable-day.dash-day-selected.client-week-today{border-color:var(--navy);outline:2px solid var(--blue);outline-offset:2px}
 .dash-selectable-day:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+
+
+/* General monthly calendar: same day-selection language as Clients */
+.dash-month-grid .dash-calendar-button{appearance:none;border:1px solid transparent;background:transparent;color:var(--ink);font:inherit;line-height:1.25;min-width:0;padding:2px;cursor:pointer}
+.dash-month-grid .dash-calendar-button.dash-has-event{background:var(--off-bg);color:var(--navy)}
+.dash-month-grid .dash-calendar-button:hover{background:var(--off-bg);border-color:var(--blue)}
+.dash-month-grid .dash-calendar-button.dash-day-selected{background:var(--navy);color:var(--white);border-color:var(--navy)}
+.dash-month-grid .dash-calendar-button.dash-day-selected i{background:var(--white)}
+.dash-month-grid .dash-calendar-button.dash-today{outline:2px solid var(--blue);outline-offset:-2px}
+.dash-month-grid .dash-calendar-button.dash-day-selected.dash-today{outline-offset:2px}
+.dash-month-grid .dash-calendar-button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.dash-events-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.dash-calendar-layout .dash-events-heading h4{margin:0}
+.client-appointment-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
