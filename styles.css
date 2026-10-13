@@ -246,3 +246,10 @@ a.client-open{display:inline-flex;align-items:center;text-decoration:none}
 .appointment-detail-description h4{color:var(--navy);margin-bottom:9px}
 .appointment-detail-description p{white-space:pre-wrap}
 .appointment-detail-links{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+
+
+/* Individual client schedule: every appointment row opens its own details. */
+.client-appointments-table .client-appointment-row{cursor:pointer;transition:background-color .12s ease}
+.client-appointments-table .client-appointment-row:hover,
+.client-appointments-table .client-appointment-row:focus-visible{background:var(--paper)}
+.client-appointments-table .client-appointment-row:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
