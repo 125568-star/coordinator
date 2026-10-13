@@ -96,19 +96,23 @@ function viewClientProfile(){
   const today=localToday(STATE_TIMEZONES[dashboardPrefs?.state]||'Australia/Brisbane');
   const dates=clientWeekDates(today);
   const start=clientDayISO(dates[0]),end=clientDayISO(dates[6]);
+  const activeDate=selectedDate && selectedDate>=start && selectedDate<=end ? selectedDate : null;
   const todayISO=[today.year,String(today.month).padStart(2,'0'),String(today.day).padStart(2,'0')].join('-');
   const weekAppointments=(D.recordAppts||[]).filter(a=>a.client_record_id===id&&a.appt_date>=start&&a.appt_date<=end);
-  const appointments=weekAppointments.filter(a=>!selectedDate||a.appt_date===selectedDate)
+  const appointments=weekAppointments.filter(a=>!activeDate||a.appt_date===activeDate)
     .sort((a,b)=>a.appt_date.localeCompare(b.appt_date)||String(a.appt_time||'').localeCompare(String(b.appt_time||'')));
   const label=d=>new Intl.DateTimeFormat('en-AU',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).format(d);
   const dateLabel=iso=>new Intl.DateTimeFormat('en-AU',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(iso+'T12:00:00Z'));
   const weekCells=dates.map(d=>{
-    const iso=clientDayISO(d),current=iso===todayISO,chosen=iso===selectedDate;
+    const iso=clientDayISO(d),current=iso===todayISO,chosen=iso===activeDate;
     const count=weekAppointments.filter(a=>a.appt_date===iso).length;
-    return `<div class="client-week-day${current?' client-week-today':''}${chosen?' dash-day-selected':''}" ${current?'aria-current="date"':''}>
+    return `<button type="button" data-client-profile-date="${iso}"
+      class="client-week-day dash-selectable-day${current?' client-week-today':''}${chosen?' dash-day-selected':''}"
+      ${current?'aria-current="date"':''} aria-pressed="${chosen}"
+      aria-label="${esc(new Intl.DateTimeFormat('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).format(d))}, ${count} appointments">
       <small>${new Intl.DateTimeFormat('en-AU',{weekday:'short',timeZone:'UTC'}).format(d)}</small>
       <strong>${d.getUTCDate()}</strong><span class="client-week-count">${count?count+' appt'+(count===1?'':'s'):'—'}</span>
-    </div>`;
+    </button>`;
   }).join('');
   const rows=appointments.map(a=>`<tr>
     <td>${esc(dateLabel(a.appt_date))}</td><td>${esc(clientAppointmentTime(a.appt_time))}</td>
@@ -122,7 +126,32 @@ function viewClientProfile(){
    <div class="client-week-heading"><div><h3>This week</h3><p class="hint">${esc(label(dates[0]))} – ${esc(label(dates[6]))}</p></div>
      <span class="chip approved">Today: ${esc(dateLabel(todayISO))}</span></div>
    <div class="client-week-grid" aria-label="Current week">${weekCells}</div>
-   <div class="client-appointments-heading"><h3>${selectedDate?'Appointments — '+esc(dateLabel(selectedDate)):'Appointments this week'}</h3><span class="chip approved">${appointments.length} appointment${appointments.length===1?'':'s'}</span></div>
-   ${appointments.length?`<div class="scroll"><table class="client-appointments-table"><thead><tr><th>Date</th><th>Time</th><th>Appointment</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="empty">No appointments for this week.</div>'}
+   <div class="client-appointments-heading"><h3>${activeDate?'Appointments — '+esc(dateLabel(activeDate)):'Appointments this week'}</h3>
+      <div class="client-appointment-actions">
+       ${activeDate?'<button type="button" class="ghost sm" data-client-profile-all-week>All week</button>':''}
+       <span class="chip approved">${appointments.length} appointment${appointments.length===1?'':'s'}</span>
+      </div></div>
+   ${appointments.length?`<div class="scroll"><table class="client-appointments-table"><thead><tr><th>Date</th><th>Time</th><th>Appointment</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="empty">No appointments for '+(activeDate?'this day':'this week')+'.</div>'}
   </section>`;
 }
+
+/* Selecting a weekday on a client's page filters the list without leaving the page. */
+document.addEventListener('click',e=>{
+  if(!location.pathname.endsWith('/client.html'))return;
+  const day=e.target.closest('[data-client-profile-date]');
+  if(day){
+    const value=day.dataset.clientProfileDate;
+    const url=new URL(location.href);
+    url.searchParams.set('date',value);
+    history.replaceState(null,'',url.pathname+url.search+url.hash);
+    render();
+    document.querySelector('[data-client-profile-date="'+value+'"]')?.focus({preventScroll:true});
+    return;
+  }
+  if(e.target.closest('[data-client-profile-all-week]')){
+    const url=new URL(location.href);
+    url.searchParams.delete('date');
+    history.replaceState(null,'',url.pathname+url.search+url.hash);
+    render();
+  }
+});
