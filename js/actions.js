@@ -86,7 +86,7 @@ document.addEventListener('submit', e => {
 });
 document.addEventListener('change', e => {
   const s = e.target, P = TABLE.profiles;
-  if (s.matches('[data-viewas]')) { view = prof(s.value) || me; tab = 'appointments'; render(); }
+  if (s.matches('[data-viewas]')) { view = prof(s.value) || me; render(); }
   else if (s.matches('[data-reqaction]')) {
     const f = s.form, v = s.value;
     f.querySelector('[data-needappt]').hidden = v === 'add';
