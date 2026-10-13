@@ -22,6 +22,41 @@ async function review(r, status, note){
 }
 const clientOpts = sel => opts(byRole('client'), 'id', pname, 'Choose a client', sel);
 const ACT = {
+  'invite-role-logins': () => {
+    if (me?.role !== 'admin') return;
+    const body='<p class="hint">Create separate Coordinator and Client accounts. Each email receives an invitation to set a password. The accounts can share a display name but must have different email addresses.</p>'+
+      '<label>Display name<input name="full_name" maxlength="100" required value="'+esc(pname(me))+'" autocomplete="name"></label>'+
+      '<label>Coordinator email<input name="coordinator_email" type="email" maxlength="254" required placeholder="Coordinator email address" autocomplete="off"></label>'+
+      '<label>Client email<input name="client_email" type="email" maxlength="254" required placeholder="Client email address" autocomplete="off"></label>';
+    openDlg('Set up two sign-in accounts', body, async f => {
+      const coordinatorEmail=String(f.coordinator_email||'').trim().toLowerCase();
+      const clientEmail=String(f.client_email||'').trim().toLowerCase();
+      if (coordinatorEmail === clientEmail || !coordinatorEmail || !clientEmail ||
+          coordinatorEmail === String(me.email||'').toLowerCase() ||
+          clientEmail === String(me.email||'').toLowerCase()) {
+        toast('Use two different email addresses, neither of which is the Admin address.',true);
+        return false;
+      }
+      const {data,error}=await sb.functions.invoke('invite-role-logins',{
+        body:{coordinator_email:coordinatorEmail,client_email:clientEmail,full_name:String(f.full_name||'').trim()}
+      });
+      if(error){
+        let message=error.message||'Invitations could not be sent.';
+        try {const details=await error.context?.json(); if(details?.error) message=details.error;}catch(_){}
+        toast(message,true); return false;
+      }
+      if(!data?.success){
+        const failed=(data?.results||[]).filter(r=>!r.invited||!r.approved);
+        const ok=(data?.results||[]).filter(r=>r.invited&&r.approved);
+        toast((ok.length?ok.map(r=>r.role+' invited').join(', ')+'. ':'')+
+          (failed.map(r=>r.role+': '+(r.error||'Failed')).join('; ')||data?.error||'Invitations could not be completed.'),true);
+        return false;
+      }
+      await loadAll();render();
+      toast('Coordinator and Client invitations sent. Check both inboxes to activate the accounts.');
+      return true;
+    });
+  },
   signout: async () => { await sb.auth.signOut(); },
   'new-client': () => { selectedClient='new'; render(); },
   'open-client': d => { selectedClient=d.id; render(); },
