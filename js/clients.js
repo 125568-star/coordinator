@@ -85,21 +85,27 @@ function clientAppointmentTime(t){
   return hh+':'+String(minutes).padStart(2,'0')+(hours>=12?' pm':' am');
 }
 function viewClientProfile(){
-  const id=new URLSearchParams(location.search).get('id');
+  const params=new URLSearchParams(location.search);
+  const id=params.get('id');
+  const rawDate=params.get('date');
+  const selectedDate=rawDate && /^\d{4}-\d{2}-\d{2}$/.test(rawDate) &&
+    !Number.isNaN(Date.parse(rawDate+'T12:00:00Z')) &&
+    new Date(rawDate+'T12:00:00Z').toISOString().slice(0,10)===rawDate ? rawDate : null;
   const client=D.clientRecords.find(c=>c.id===id);
   if(!client) return `<div class="bar"><h2>Client not found</h2><a class="ghost sm client-open" href="./clients.html">Back to Clients</a></div><div class="empty">Select a client from the client directory.</div>`;
   const today=localToday(STATE_TIMEZONES[dashboardPrefs?.state]||'Australia/Brisbane');
   const dates=clientWeekDates(today);
   const start=clientDayISO(dates[0]),end=clientDayISO(dates[6]);
   const todayISO=[today.year,String(today.month).padStart(2,'0'),String(today.day).padStart(2,'0')].join('-');
-  const appointments=(D.recordAppts||[]).filter(a=>a.client_record_id===id&&a.appt_date>=start&&a.appt_date<=end)
+  const weekAppointments=(D.recordAppts||[]).filter(a=>a.client_record_id===id&&a.appt_date>=start&&a.appt_date<=end);
+  const appointments=weekAppointments.filter(a=>!selectedDate||a.appt_date===selectedDate)
     .sort((a,b)=>a.appt_date.localeCompare(b.appt_date)||String(a.appt_time||'').localeCompare(String(b.appt_time||'')));
   const label=d=>new Intl.DateTimeFormat('en-AU',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).format(d);
   const dateLabel=iso=>new Intl.DateTimeFormat('en-AU',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(iso+'T12:00:00Z'));
   const weekCells=dates.map(d=>{
-    const iso=clientDayISO(d),current=iso===todayISO;
-    const count=appointments.filter(a=>a.appt_date===iso).length;
-    return `<div class="client-week-day${current?' client-week-today':''}" ${current?'aria-current="date"':''}>
+    const iso=clientDayISO(d),current=iso===todayISO,chosen=iso===selectedDate;
+    const count=weekAppointments.filter(a=>a.appt_date===iso).length;
+    return `<div class="client-week-day${current?' client-week-today':''}${chosen?' dash-day-selected':''}" ${current?'aria-current="date"':''}>
       <small>${new Intl.DateTimeFormat('en-AU',{weekday:'short',timeZone:'UTC'}).format(d)}</small>
       <strong>${d.getUTCDate()}</strong><span class="client-week-count">${count?count+' appt'+(count===1?'':'s'):'—'}</span>
     </div>`;
@@ -116,7 +122,7 @@ function viewClientProfile(){
    <div class="client-week-heading"><div><h3>This week</h3><p class="hint">${esc(label(dates[0]))} – ${esc(label(dates[6]))}</p></div>
      <span class="chip approved">Today: ${esc(dateLabel(todayISO))}</span></div>
    <div class="client-week-grid" aria-label="Current week">${weekCells}</div>
-   <div class="client-appointments-heading"><h3>Appointments this week</h3><span class="chip approved">${appointments.length} appointment${appointments.length===1?'':'s'}</span></div>
+   <div class="client-appointments-heading"><h3>${selectedDate?'Appointments — '+esc(dateLabel(selectedDate)):'Appointments this week'}</h3><span class="chip approved">${appointments.length} appointment${appointments.length===1?'':'s'}</span></div>
    ${appointments.length?`<div class="scroll"><table class="client-appointments-table"><thead><tr><th>Date</th><th>Time</th><th>Appointment</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="empty">No appointments for this week.</div>'}
   </section>`;
 }
