@@ -161,7 +161,7 @@ function dashboardEventList(events,today){
     const day=Number(e.date.slice(-2));
     const dow=new Intl.DateTimeFormat('en-AU',{weekday:'short',timeZone:'UTC'}).format(new Date(e.date+'T12:00:00Z'));
     const past=day<today.day;
-    return '<li class="dash-event'+(past?' dash-past':'')+'"><div class="dash-date"><strong>'+day+'</strong><small>'+dow+'</small></div><div class="dash-event-text"><span class="dash-category">'+esc(e.category)+'</span><strong>'+esc(e.title)+'</strong><p>'+esc(e.detail)+'</p><a href="'+esc(e.url)+'" target="_blank" rel="noopener noreferrer">More information ↗</a></div></li>';
+    return '<li class="dash-event'+(past?' dash-past':'')+'"><div class="dash-date"><strong>'+day+'</strong><small>'+dow+'</small></div><div class="dash-event-text"><span class="dash-category">'+esc(e.category)+'</span><strong>'+esc(e.title)+'</strong><p>'+esc(e.detail)+'</p><a href="'+esc(e.url)+'">More information ↗</a></div></li>';
   }).join(''):'<li class="dash-no-events">No curated local events for this month. Use the official listings below to see more.</li>';
 }
 function dashboardClientEvents(year,month){
@@ -188,10 +188,11 @@ function dashboardWeeklyClients(today){
   const base=new Date(Date.UTC(today.year,today.month-1,today.day));
   const monday=new Date(base.getTime()-((base.getUTCDay()+6)%7)*86400000);
   const days=Array.from({length:7},(_,i)=>new Date(monday.getTime()+i*86400000));
-  const key=d=>d.toISOString().slice(0,10);
-  const start=key(days[0]),end=key(days[6]),current=key(base);
-  const dateText=d=>new Intl.DateTimeFormat('en-AU',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'}).format(d);
-  const weekday=d=>new Intl.DateTimeFormat('en-AU',{weekday:'long',timeZone:'UTC'}).format(d);
+  const iso=d=>d.toISOString().slice(0,10);
+  const start=iso(days[0]),end=iso(days[6]),current=iso(base);
+  const dateLabel=d=>new Intl.DateTimeFormat('en-AU',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).format(d);
+  const shortDate=date=>new Intl.DateTimeFormat('en-AU',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(date+'T12:00:00Z'));
+  const weekday=d=>new Intl.DateTimeFormat('en-AU',{weekday:'short',timeZone:'UTC'}).format(d);
   const formatTime=value=>{
     if(!value)return 'Time not set';
     const [hh,mm]=value.split(':').map(Number);
@@ -209,32 +210,33 @@ function dashboardWeeklyClients(today){
     String(a.appt_time||'').localeCompare(String(b.appt_time||''))||
     a.clientName.localeCompare(b.clientName)
   );
-  const weekStrip='<div class="dash-week-strip" aria-label="Current week">'+days.map(day=>{
-    const iso=key(day),n=appointments.filter(a=>a.appt_date===iso).length;
-    return '<div class="dash-week-strip-day'+(iso===current?' dash-week-strip-today':'')+'"'+(iso===current?' aria-current="date"':'')+'>'+
-      '<small>'+weekday(day).slice(0,3)+'</small><strong>'+day.getUTCDate()+'</strong>'+
-      '<span>'+n+(n===1?' event':' events')+'</span></div>';
-  }).join('')+'</div>';
-  const agenda=days.map(day=>{
-    const iso=key(day),items=appointments.filter(a=>a.appt_date===iso),selected=iso===current;
-    const rows=items.length?items.map(a=>{
-      const avatar=a.client&&typeof clientAvatar==='function'?clientAvatar(a.client):
-        '<span class="client-avatar client-initials" aria-hidden="true">'+esc(a.clientName.slice(0,1))+'</span>';
-      return '<a class="dash-agenda-appointment" href="'+esc(a.link)+'">'+avatar+
-        '<span class="dash-agenda-details"><strong>'+esc(a.clientName)+'</strong><span>'+esc(a.title)+
-        (a.is_example?' <span class="dash-example-label">(example)</span>':'')+'</span></span>'+
-        '<span class="dash-agenda-time">'+esc(formatTime(a.appt_time))+'</span></a>';
-    }).join(''):'<p class="dash-agenda-empty">No appointments</p>';
-    return '<section class="dash-agenda-day'+(selected?' dash-agenda-today':'')+'" aria-label="'+esc(weekday(day)+' '+dateText(day))+'">'+
-      '<div class="dash-agenda-day-head"><h4>'+weekday(day)+' <span>'+dateText(day)+'</span></h4>'+
-      (selected?'<span class="dash-agenda-today-label">Today</span>':'')+
-      '<small>'+items.length+' appointment'+(items.length===1?'':'s')+'</small></div>'+
-      '<div class="dash-agenda-appointments">'+rows+'</div></section>';
+  const weekCells=days.map(d=>{
+    const day=iso(d),count=appointments.filter(a=>a.appt_date===day).length,selected=day===current;
+    return '<div class="client-week-day'+(selected?' client-week-today':'')+'"'+(selected?' aria-current="date"':'')+'>'+
+      '<small>'+weekday(d)+'</small><strong>'+d.getUTCDate()+'</strong>'+
+      '<span class="client-week-count">'+(count?count+' appt'+(count===1?'':'s'):'—')+'</span></div>';
   }).join('');
-  return '<div class="dash-weekly-clients" role="tabpanel"><div class="dash-week-summary"><div><h4>This week</h4>'+
-    '<p class="hint">'+esc(dateText(days[0]))+' – '+esc(dateText(days[6]))+'</p></div>'+
-    '<strong>'+appointments.length+' appointment'+(appointments.length===1?'':'s')+'</strong></div>'+
-    weekStrip+'<div class="dash-weekly-agenda">'+agenda+'</div></div>';
+  const rows=appointments.map(a=>{
+    const avatar=a.client&&typeof clientAvatar==='function'?clientAvatar(a.client):
+      '<span class="client-avatar client-initials" aria-hidden="true">'+esc(a.clientName.slice(0,1))+'</span>';
+    return '<tr><td>'+esc(shortDate(a.appt_date))+'</td>'+
+      '<td>'+esc(formatTime(a.appt_time))+'</td>'+
+      '<td><a class="dash-client-table-link" href="'+esc(a.link)+'">'+avatar+
+        '<strong>'+esc(a.clientName)+'</strong></a></td>'+
+      '<td><strong>'+esc(a.title)+'</strong></td>'+
+      '<td>'+(a.is_example?'<span class="chip pending">Example</span>':'<span class="chip approved">Scheduled</span>')+'</td></tr>';
+  }).join('');
+  return '<div class="dash-weekly-clients" role="tabpanel">'+
+    '<div class="client-week-heading"><div><h3>This week</h3><p class="hint">'+
+      esc(dateLabel(days[0]))+' – '+esc(dateLabel(days[6]))+'</p></div>'+
+    '<span class="chip approved">Today: '+esc(shortDate(current))+'</span></div>'+
+    '<div class="client-week-grid" aria-label="Current week">'+weekCells+'</div>'+
+    '<div class="client-appointments-heading"><h3>Appointments this week</h3>'+
+      '<span class="chip approved">'+appointments.length+' appointment'+(appointments.length===1?'':'s')+'</span></div>'+
+    (appointments.length?'<div class="scroll"><table class="client-appointments-table dash-all-clients-table">'+
+      '<thead><tr><th>Date</th><th>Time</th><th>Client</th><th>Appointment</th><th>Status</th></tr></thead>'+
+      '<tbody>'+rows+'</tbody></table></div>':'<div class="empty">No appointments for this week.</div>')+
+    '</div>';
 }
 
 function viewDashboard(){
@@ -266,9 +268,9 @@ function viewDashboard(){
       dashboardCalendarDays(year,month,events,now)+'</div><div><h4>Dates to know</h4>'+
       '<ol class="dash-event-list">'+dashboardEventList(events,now)+'</ol></div></div>')+
     (dashboardTab==='general'?'<p class="dash-source-note">'+generalNote+'</p>'+
-      '<div class="dash-source-links"><a href="'+esc(localSource)+'" target="_blank" rel="noopener noreferrer">'+esc(location.state)+' public holidays ↗</a>'+
-      (citySource?'<a href="'+esc(citySource)+'" target="_blank" rel="noopener noreferrer">'+esc(location.city)+' events ↗</a>':'')+'</div>'
-     :'<p class="dash-source-note">Client appointments and recorded birthdays for the selected month. Use Calendar or Clients to manage them.</p>')+
+      '<div class="dash-source-links"><a href="'+esc(localSource)+'">'+esc(location.state)+' public holidays ↗</a>'+
+      (citySource?'<a href="'+esc(citySource)+'">'+esc(location.city)+' events ↗</a>':'')+'</div>'
+     :'<p class="dash-source-note">All clients’ appointments for the current week. Select a client to see their full page.</p>')+
     '</section>';
 }
 document.addEventListener('click',e=>{
