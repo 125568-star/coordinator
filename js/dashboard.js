@@ -203,7 +203,7 @@ function dashboardWeeklyClients(today){
   };
   const directory=(D.recordAppts||[]).filter(a=>a.appt_date>=start&&a.appt_date<=end).map(a=>{
     const client=(D.clientRecords||[]).find(c=>c.id===a.client_record_id);
-    return {...a,clientName:client?.full_name||'Client',client,link:'./client.html?id='+encodeURIComponent(a.client_record_id)};
+    return {...a,clientName:client?.full_name||'Client',client,link:'./client.html?id='+encodeURIComponent(a.client_record_id)+'&date='+encodeURIComponent(a.appt_date)};
   });
   const loginClients=(typeof myAppts==='function'?myAppts():[]).filter(a=>a.appt_date>=start&&a.appt_date<=end).map(a=>({
     ...a,clientName:nameOf(a.client_id),client:null,appt_time:null,link:'./calendar.html',is_example:false
