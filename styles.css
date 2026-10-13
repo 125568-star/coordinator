@@ -118,3 +118,22 @@ button.dash-location{background:var(--white);cursor:pointer;color:var(--blue)}
 .dash-location-form label{font-size:.8rem;min-width:130px}
 .dash-location-form input,.dash-location-form select{padding:5px 9px;font-size:.9rem}
 @media(max-width:700px){.dash-location-form{width:100%}.dash-location-form label{flex:1}}
+
+/* Individual client page and selected current week */
+a.client-open{display:inline-flex;align-items:center;text-decoration:none}
+.client-profile-heading{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:12px 0 24px;padding:20px;background:var(--white);border:1px solid var(--line);border-radius:var(--radius)}
+.client-profile-heading .client-avatar{width:68px;height:68px}
+.client-profile-heading h3{font-size:1.35rem;color:var(--navy)}
+.client-profile-heading .ghost{margin-left:auto}
+.client-week-card{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:22px}
+.client-week-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.client-week-heading h3,.client-appointments-heading h3{font-size:1.12rem;color:var(--navy)}
+.client-week-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.client-week-day{display:flex;align-items:center;flex-direction:column;justify-content:center;gap:3px;min-width:0;border:1px solid var(--line);border-radius:9px;background:var(--paper);padding:10px 3px}
+.client-week-day small{font-size:.79rem;color:var(--muted)}
+.client-week-day strong{font-size:1.2rem}
+.client-week-day.client-week-today{border:2px solid var(--blue);background:var(--off-bg)}
+.client-week-count{font-size:.68rem;color:var(--muted);white-space:nowrap}
+.client-appointments-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:26px 0 12px}
+.client-appointments-table{min-width:560px}
+@media(max-width:600px){.client-week-card{padding:14px}.client-week-grid{gap:3px}.client-week-day{padding:8px 1px}.client-week-day strong{font-size:1rem}.client-week-count{font-size:.57rem}.client-profile-heading .ghost{margin-left:0}}
