@@ -50,6 +50,7 @@ async function loadAll(){
     const {data, error} = await sb.from(TABLE[k]).select('*');
     if (error) { loadErrs.push(TABLE[k] + ': ' + error.message); D[k] = []; } else D[k] = data || [];
   }));
+  if(tab==='dashboard' && typeof loadDashboardPrefs === 'function') await loadDashboardPrefs();
 }
 async function run(p, ok){
   const {data, error} = await p;
