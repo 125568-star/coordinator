@@ -206,3 +206,43 @@ a.client-open{display:inline-flex;align-items:center;text-decoration:none}
 .dash-events-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .dash-calendar-layout .dash-events-heading h4{margin:0}
 .client-appointment-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+
+/* Dashboard Clients: one-click appointment rows; photograph, appointment, time. */
+.dash-all-clients-table{min-width:0;table-layout:auto}
+.dash-all-clients-table td{vertical-align:middle}
+.dash-all-clients-table th:last-child{text-align:right}
+.dash-all-clients-table .dash-appointment-row{cursor:pointer;transition:background-color .12s ease}
+.dash-all-clients-table .dash-appointment-row:hover,
+.dash-all-clients-table .dash-appointment-row:focus-visible{background:var(--paper)}
+.dash-all-clients-table .dash-appointment-row:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
+.dash-appointment-client{display:flex;align-items:center;gap:12px;white-space:nowrap}
+.dash-appointment-client .client-avatar{width:44px;height:44px}
+.dash-appointment-title{color:var(--navy);font-size:.96rem}
+.dash-appointment-example{display:block;color:var(--muted);font-size:.73rem}
+.dash-all-clients-table td.dash-appointment-time{text-align:right;white-space:nowrap;font-size:.91rem}
+@media(max-width:600px){
+  .dash-all-clients-table td,.dash-all-clients-table th{padding:10px 7px}
+  .dash-appointment-client{gap:7px;white-space:normal}
+  .dash-appointment-client .client-avatar{width:34px;height:34px}
+  .dash-appointment-client strong{font-size:.85rem}
+  .dash-appointment-title{font-size:.85rem}
+  .dash-all-clients-table td.dash-appointment-time{font-size:.79rem}
+}
+
+/* Appointment detail view */
+.appointment-detail-card{display:grid;gap:22px}
+.appointment-detail-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.appointment-detail-head .client-avatar{width:64px;height:64px}
+.appointment-detail-head h3{font-size:1.25rem;color:var(--navy)}
+.appointment-detail-head p{font-size:.9rem;color:var(--muted)}
+.appointment-detail-head .chip{margin-left:auto}
+.appointment-detail-title{font-size:1.38rem;color:var(--navy)}
+.appointment-detail-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.appointment-detail-field{padding:14px;border:1px solid var(--line);border-radius:9px;background:var(--paper)}
+.appointment-detail-field small{display:block;color:var(--muted);margin-bottom:5px}
+.appointment-detail-field strong{font-size:1rem}
+.appointment-detail-description{padding-top:15px;border-top:1px solid var(--line)}
+.appointment-detail-description h4{color:var(--navy);margin-bottom:9px}
+.appointment-detail-description p{white-space:pre-wrap}
+.appointment-detail-links{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
