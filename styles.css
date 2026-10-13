@@ -256,3 +256,8 @@ a.client-open{display:inline-flex;align-items:center;text-decoration:none}
 
 /* Primary navigation: only Dashboard and Clients are visible. Other page routes remain intact. */
 nav.tabs > a:not([href="./dashboard.html"]):not([href="./clients.html"]){display:none}
+
+/* Simple signed-in header: account name above its real role, no impersonation selector. */
+.top .as{display:none}
+.top .me{min-width:0}
+.top .me strong{font-weight:700}
