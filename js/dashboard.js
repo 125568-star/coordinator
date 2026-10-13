@@ -98,6 +98,7 @@ const SYDNEY_EVENTS = [
 let dashboardPrefs = {...LOCATION_DEFAULT};
 let dashboardTab = 'general';
 let dashboardSelectedDate = null;
+let dashboardGeneralSelectedDate = null;
 let dashboardLocationEditing = false;
 let dashboardPrefError = '';
 async function loadDashboardPrefs(){
@@ -143,27 +144,40 @@ function localEventsFor(year,month,location){
   return [...holidays,...local].filter(e=>e.date.startsWith(prefix)).sort((a,b)=>a.date.localeCompare(b.date));
 }
 function brisbaneEventsFor(year,month){return localEventsFor(year,month,LOCATION_DEFAULT);}
-function dashboardCalendarDays(year,month,events,today){
+function dashboardCalendarDays(year,month,events,today,selectedDate){
   const starts=(new Date(Date.UTC(year,month-1,1)).getUTCDay()+6)%7;
   const days=new Date(Date.UTC(year,month,0)).getUTCDate();
-  const notable=new Set(events.map(e=>Number(e.date.slice(-2))));
-  let out='<div class="dash-month-grid" aria-label="Month overview">';
+  const counts=new Map();
+  events.forEach(e=>counts.set(e.date,(counts.get(e.date)||0)+1));
+  let out='<div class="dash-month-grid" aria-label="Monthly events calendar">';
   for(const d of ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'])out+='<span class="dash-weekday">'+d+'</span>';
   for(let n=0;n<starts;n++)out+='<span aria-hidden="true"></span>';
   for(let n=1;n<=days;n++){
-    const active=notable.has(n),isToday=year===today.year&&month===today.month&&n===today.day;
-    out+='<span class="dash-day'+(active?' dash-has-event':'')+(isToday?' dash-today':'')+'"'+(isToday?' aria-current="date"':'')+'>'+n+(active?'<i aria-hidden="true"></i>':'')+'</span>';
+    const iso=year+'-'+String(month).padStart(2,'0')+'-'+String(n).padStart(2,'0');
+    const count=counts.get(iso)||0;
+    const isToday=year===today.year&&month===today.month&&n===today.day;
+    const selected=iso===selectedDate;
+    const label=new Intl.DateTimeFormat('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'UTC'})
+      .format(new Date(iso+'T12:00:00Z'));
+    out+='<button type="button" data-dash-general-date="'+iso+'" class="dash-day dash-calendar-button'+
+      (count?' dash-has-event':'')+(isToday?' dash-today':'')+(selected?' dash-day-selected':'')+'"'+
+      (isToday?' aria-current="date"':'')+' aria-pressed="'+selected+'"'+
+      ' aria-label="'+esc(label+', '+count+' event'+(count===1?'':'s'))+'">'+n+
+      (count?'<i aria-hidden="true"></i>':'')+'</button>';
   }
   return out+'</div>';
 }
-function dashboardEventList(events,today){
-  const visible=events.slice(0,5);
-  return visible.length?visible.map(e=>{
+function dashboardEventList(events,today,selectedDate){
+  return events.length?events.map(e=>{
     const day=Number(e.date.slice(-2));
     const dow=new Intl.DateTimeFormat('en-AU',{weekday:'short',timeZone:'UTC'}).format(new Date(e.date+'T12:00:00Z'));
-    const past=day<today.day;
-    return '<li class="dash-event'+(past?' dash-past':'')+'"><div class="dash-date"><strong>'+day+'</strong><small>'+dow+'</small></div><div class="dash-event-text"><span class="dash-category">'+esc(e.category)+'</span><strong>'+esc(e.title)+'</strong><p>'+esc(e.detail)+'</p><a href="'+esc(e.url)+'">More information ↗</a></div></li>';
-  }).join(''):'<li class="dash-no-events">No curated local events for this month. Use the official listings below to see more.</li>';
+    const past=e.date.slice(0,7)===(today.year+'-'+String(today.month).padStart(2,'0')) && day<today.day;
+    return '<li class="dash-event'+(past?' dash-past':'')+'"><div class="dash-date"><strong>'+day+'</strong><small>'+dow+'</small></div>'+
+      '<div class="dash-event-text"><span class="dash-category">'+esc(e.category)+'</span><strong>'+esc(e.title)+
+      '</strong><p>'+esc(e.detail)+'</p><a href="'+esc(e.url)+'">More information ↗</a></div></li>';
+  }).join(''):'<li class="dash-no-events">'+
+    (selectedDate?'No listed events for this date. Check the official event listings for more.':
+      'No curated local events for this month. Check the official listings below.')+'</li>';
 }
 function dashboardClientEvents(year,month){
   const prefix=year+'-'+String(month).padStart(2,'0')+'-';
@@ -251,7 +265,13 @@ function viewDashboard(){
   const timezone=STATE_TIMEZONES[location.state]||'Australia/Brisbane';
   const now=localToday(timezone),{year,month}=now;
   const monthName=new Intl.DateTimeFormat('en-AU',{month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(Date.UTC(year,month-1,1,12)));
+  const monthPrefix=year+'-'+String(month).padStart(2,'0')+'-';
+  if(dashboardGeneralSelectedDate&&!dashboardGeneralSelectedDate.startsWith(monthPrefix)) dashboardGeneralSelectedDate=null;
   const events=dashboardTab==='general'?localEventsFor(year,month,location):dashboardClientEvents(year,month);
+  const shownGeneralEvents=dashboardGeneralSelectedDate?events.filter(e=>e.date===dashboardGeneralSelectedDate):events;
+  const generalDayTitle=dashboardGeneralSelectedDate?
+    new Intl.DateTimeFormat('en-AU',{weekday:'short',day:'numeric',month:'short',year:'numeric',timeZone:'UTC'})
+      .format(new Date(dashboardGeneralSelectedDate+'T12:00:00Z')):null;
   const localSource=STATE_EVENT_LINKS[location.state];
   const citySource=CITY_EVENT_LINKS[location.city]||null;
   const generalNote=location.state==='NSW'||location.state==='QLD'
@@ -272,8 +292,10 @@ function viewDashboard(){
     '<button type="button" role="tab" data-dash-tab="clients" aria-selected="'+(dashboardTab==='clients')+'">Clients</button></div>'+
     (dashboardTab==='clients' ? dashboardWeeklyClients(now) :
       '<div class="dash-calendar-layout" role="tabpanel"><div><h4>'+esc(monthName)+'</h4>'+
-      dashboardCalendarDays(year,month,events,now)+'</div><div><h4>Dates to know</h4>'+
-      '<ol class="dash-event-list">'+dashboardEventList(events,now)+'</ol></div></div>')+
+      dashboardCalendarDays(year,month,events,now,dashboardGeneralSelectedDate)+'</div><div>'+
+      '<div class="dash-events-heading"><h4>'+(generalDayTitle?'Events — '+esc(generalDayTitle):'Dates to know')+'</h4>'+
+      (dashboardGeneralSelectedDate?'<button class="ghost sm" type="button" data-dash-general-all-month>All month</button>':'')+
+      '</div><ol class="dash-event-list">'+dashboardEventList(shownGeneralEvents,now,dashboardGeneralSelectedDate)+'</ol></div></div>')+
     (dashboardTab==='general'?'<p class="dash-source-note">'+generalNote+'</p>'+
       '<div class="dash-source-links"><a href="'+esc(localSource)+'">'+esc(location.state)+' public holidays ↗</a>'+
       (citySource?'<a href="'+esc(citySource)+'">'+esc(location.city)+' events ↗</a>':'')+'</div>'
@@ -281,6 +303,14 @@ function viewDashboard(){
     '</section>';
 }
 document.addEventListener('click',e=>{
+  const generalDate=e.target.closest('[data-dash-general-date]');
+  if(generalDate){
+    dashboardGeneralSelectedDate=generalDate.dataset.dashGeneralDate;
+    render();
+    document.querySelector('[data-dash-general-date="'+dashboardGeneralSelectedDate+'"]')?.focus({preventScroll:true});
+    return;
+  }
+  if(e.target.closest('[data-dash-general-all-month]')){dashboardGeneralSelectedDate=null;render();return;}
   const dateButton=e.target.closest('[data-dash-client-date]');
   if(dateButton){dashboardSelectedDate=dateButton.dataset.dashClientDate;render();return;}
   const tab=e.target.closest('[data-dash-tab]');
