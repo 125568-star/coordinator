@@ -51,7 +51,9 @@ function viewClients(){
   const accounts = !accountClients.length ? '' :
     '<h3 class="sub">Clients with website logins</h3><p class="hint">These accounts are kept separate from the coordinator-managed client directory.</p><div class="scroll"><table><thead><tr><th>Name</th><th>Email</th><th></th></tr></thead><tbody>'+
     accountClients.map(c=>'<tr><td>'+esc(pname(c))+'</td><td>'+esc(c.email)+'</td><td class="act"><button class="ghost sm" data-act="add-appt" data-client="'+esc(c.id)+'">Add appointment</button></td></tr>').join('')+'</tbody></table></div>';
-  return '<div class="bar"><h2>Clients</h2><button class="primary" data-act="new-client">Add Client</button></div>'+
+  return '<div class="bar"><h2>Clients</h2><div class="row-end">'+
+    (me?.role==='admin'?'<button type="button" class="ghost sm" data-act="invite-role-logins">Set up role logins</button>':'')+
+    '<button class="primary" data-act="new-client">Add Client</button></div></div>'+
   '<p class="hint">View, add, edit and delete client records.</p>'+directory+accounts;
 }
 async function saveClientRecord(form){
