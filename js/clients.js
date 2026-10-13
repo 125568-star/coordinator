@@ -114,7 +114,9 @@ function viewClientProfile(){
       <strong>${d.getUTCDate()}</strong><span class="client-week-count">${count?count+' appt'+(count===1?'':'s'):'—'}</span>
     </button>`;
   }).join('');
-  const rows=appointments.map(a=>`<tr>
+  const rows=appointments.map(a=>`<tr class="client-appointment-row" role="link" tabindex="0"
+    data-client-appointment-href="./appointment.html?kind=record&amp;id=${encodeURIComponent(a.id)}&amp;from=client"
+    aria-label="View ${esc(a.title)} on ${esc(dateLabel(a.appt_date))}">
     <td>${esc(dateLabel(a.appt_date))}</td><td>${esc(clientAppointmentTime(a.appt_time))}</td>
     <td><strong>${esc(a.title)}</strong>${a.notes?'<small>'+esc(a.notes)+'</small>':''}</td>
     <td>${a.is_example?'<span class="chip pending">Example</span>':'<span class="chip approved">Scheduled</span>'}</td>
@@ -138,6 +140,8 @@ function viewClientProfile(){
 /* Selecting a weekday on a client's page filters the list without leaving the page. */
 document.addEventListener('click',e=>{
   if(!location.pathname.endsWith('/client.html'))return;
+  const appointmentRow=e.target.closest('[data-client-appointment-href]');
+  if(appointmentRow){location.assign(appointmentRow.dataset.clientAppointmentHref);return;}
   const day=e.target.closest('[data-client-profile-date]');
   if(day){
     const value=day.dataset.clientProfileDate;
@@ -153,5 +157,16 @@ document.addEventListener('click',e=>{
     url.searchParams.delete('date');
     history.replaceState(null,'',url.pathname+url.search+url.hash);
     render();
+  }
+});
+
+
+/* Make appointment table rows keyboard-accessible as well as clickable. */
+document.addEventListener('keydown',e=>{
+  if(!location.pathname.endsWith('/client.html'))return;
+  const row=e.target.closest('[data-client-appointment-href]');
+  if(row && (e.key==='Enter'||e.key===' ')){
+    e.preventDefault();
+    location.assign(row.dataset.clientAppointmentHref);
   }
 });
