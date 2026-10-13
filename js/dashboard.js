@@ -22,9 +22,6 @@ const qldHolidays = {
   ]
 };
 const brisbaneSpecialEvents = [
-  {date:'2026-10-03',title:'Valley Fiesta',category:'Brisbane event',
-    detail:'Free live music and street festival in Fortitude Valley.',
-    url:'https://www.brisbane.qld.gov.au/events-arts-and-culture/what-s-on-in-brisbane/valley-fiesta'},
   {date:'2026-10-06',title:'Queensland state schools — Term 4 begins',category:'School calendar',
     detail:'State school students return after the September holidays.',
     url:QLD_SCHOOL_SOURCE},
