@@ -175,3 +175,10 @@ a.client-open{display:inline-flex;align-items:center;text-decoration:none}
  .dash-agenda-appointment{gap:9px;padding:10px}
  .dash-agenda-time{font-size:.74rem}
 }
+
+/* All-client weekly appointments use the same table layout as the individual client page. */
+.dash-all-clients-table{min-width:650px}
+.dash-client-table-link{display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:var(--navy)}
+.dash-client-table-link:hover{text-decoration:underline}
+.dash-client-table-link .client-avatar{width:36px;height:36px}
+.dash-all-clients-table td{vertical-align:middle}
