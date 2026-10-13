@@ -253,3 +253,6 @@ a.client-open{display:inline-flex;align-items:center;text-decoration:none}
 .client-appointments-table .client-appointment-row:hover,
 .client-appointments-table .client-appointment-row:focus-visible{background:var(--paper)}
 .client-appointments-table .client-appointment-row:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
+
+/* Primary navigation: only Dashboard and Clients are visible. Other page routes remain intact. */
+nav.tabs > a:not([href="./dashboard.html"]):not([href="./clients.html"]){display:none}
