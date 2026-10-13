@@ -55,7 +55,7 @@ const ACT = {
       await loadAll();render();
       toast('Coordinator and Client invitations sent. Check both inboxes to activate the accounts.');
       return true;
-    });
+    }, '<button class="primary" type="submit">Send invitations</button>');
   },
   signout: async () => { await sb.auth.signOut(); },
   'new-client': () => { selectedClient='new'; render(); },
