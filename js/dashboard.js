@@ -171,11 +171,16 @@ function dashboardClientEvents(year,month){
     date:a.appt_date,title:a.title,category:'Client appointment',
     detail:'Client: '+nameOf(a.client_id),url:'./calendar.html'
   }));
+  const directoryAppointments=(D.recordAppts||[]).filter(a=>(a.appt_date||'').startsWith(prefix)).map(a=>({
+    date:a.appt_date,title:a.title,category:'Client appointment',
+    detail:'Client: '+((D.clientRecords||[]).find(c=>c.id===a.client_record_id)?.full_name||'Client'),
+    url:'./client.html?id='+encodeURIComponent(a.client_record_id)
+  }));
   const birthdays=(D.clientRecords||[]).filter(c=>c.date_of_birth?.slice(5,7)===prefix.slice(5,7)).map(c=>({
     date:prefix+c.date_of_birth.slice(8,10),title:c.full_name+' — birthday',
     category:'Client birthday',detail:'From the client directory',url:'./clients.html'
   }));
-  return [...appointments,...birthdays].sort((a,b)=>a.date.localeCompare(b.date));
+  return [...appointments,...directoryAppointments,...birthdays].sort((a,b)=>a.date.localeCompare(b.date));
 }
 function viewDashboard(){
   const location=dashboardPrefs||LOCATION_DEFAULT;
