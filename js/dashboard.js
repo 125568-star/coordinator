@@ -97,6 +97,7 @@ const SYDNEY_EVENTS = [
 ];
 let dashboardPrefs = {...LOCATION_DEFAULT};
 let dashboardTab = 'general';
+let dashboardSelectedDate = null;
 let dashboardLocationEditing = false;
 let dashboardPrefError = '';
 async function loadDashboardPrefs(){
@@ -190,6 +191,8 @@ function dashboardWeeklyClients(today){
   const days=Array.from({length:7},(_,i)=>new Date(monday.getTime()+i*86400000));
   const iso=d=>d.toISOString().slice(0,10);
   const start=iso(days[0]),end=iso(days[6]),current=iso(base);
+  // Keep selection when switching tabs, but reset it when a new week begins.
+  if (!dashboardSelectedDate || dashboardSelectedDate<start || dashboardSelectedDate>end) dashboardSelectedDate=current;
   const dateLabel=d=>new Intl.DateTimeFormat('en-AU',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).format(d);
   const shortDate=date=>new Intl.DateTimeFormat('en-AU',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(date+'T12:00:00Z'));
   const weekday=d=>new Intl.DateTimeFormat('en-AU',{weekday:'short',timeZone:'UTC'}).format(d);
@@ -211,12 +214,17 @@ function dashboardWeeklyClients(today){
     a.clientName.localeCompare(b.clientName)
   );
   const weekCells=days.map(d=>{
-    const day=iso(d),count=appointments.filter(a=>a.appt_date===day).length,selected=day===current;
-    return '<div class="client-week-day'+(selected?' client-week-today':'')+'"'+(selected?' aria-current="date"':'')+'>'+
+    const day=iso(d),count=appointments.filter(a=>a.appt_date===day).length;
+    const isToday=day===current,isSelected=day===dashboardSelectedDate;
+    return '<button type="button" data-dash-client-date="'+day+'" class="client-week-day dash-selectable-day'+
+      (isToday?' client-week-today':'')+(isSelected?' dash-day-selected':'')+'"'+
+      (isToday?' aria-current="date"':'')+' aria-pressed="'+isSelected+'" aria-label="'+weekday(d)+' '+dateLabel(d)+', '+count+' appointments">'+
       '<small>'+weekday(d)+'</small><strong>'+d.getUTCDate()+'</strong>'+
-      '<span class="client-week-count">'+(count?count+' appt'+(count===1?'':'s'):'—')+'</span></div>';
+      '<span class="client-week-count">'+(count?count+' appt'+(count===1?'':'s'):'—')+'</span></button>';
   }).join('');
-  const rows=appointments.map(a=>{
+  const selectedAppointments=appointments.filter(a=>a.appt_date===dashboardSelectedDate);
+  const selectedDay=days.find(d=>iso(d)===dashboardSelectedDate);
+  const rows=selectedAppointments.map(a=>{
     const avatar=a.client&&typeof clientAvatar==='function'?clientAvatar(a.client):
       '<span class="client-avatar client-initials" aria-hidden="true">'+esc(a.clientName.slice(0,1))+'</span>';
     return '<tr><td>'+esc(shortDate(a.appt_date))+'</td>'+
@@ -231,9 +239,9 @@ function dashboardWeeklyClients(today){
       esc(dateLabel(days[0]))+' – '+esc(dateLabel(days[6]))+'</p></div>'+
     '<span class="chip approved">Today: '+esc(shortDate(current))+'</span></div>'+
     '<div class="client-week-grid" aria-label="Current week">'+weekCells+'</div>'+
-    '<div class="client-appointments-heading"><h3>Appointments this week</h3>'+
-      '<span class="chip approved">'+appointments.length+' appointment'+(appointments.length===1?'':'s')+'</span></div>'+
-    (appointments.length?'<div class="scroll"><table class="client-appointments-table dash-all-clients-table">'+
+    '<div class="client-appointments-heading"><h3>Appointments — '+esc(shortDate(dashboardSelectedDate))+'</h3>'+
+      '<span class="chip approved">'+selectedAppointments.length+' appointment'+(selectedAppointments.length===1?'':'s')+'</span></div>'+
+    (selectedAppointments.length?'<div class="scroll"><table class="client-appointments-table dash-all-clients-table">'+
       '<thead><tr><th>Date</th><th>Time</th><th>Client</th><th>Appointment</th><th>Status</th></tr></thead>'+
       '<tbody>'+rows+'</tbody></table></div>':'<div class="empty">No appointments for this week.</div>')+
     '</div>';
@@ -274,6 +282,8 @@ function viewDashboard(){
     '</section>';
 }
 document.addEventListener('click',e=>{
+  const dateButton=e.target.closest('[data-dash-client-date]');
+  if(dateButton){dashboardSelectedDate=dateButton.dataset.dashClientDate;render();return;}
   const tab=e.target.closest('[data-dash-tab]');
   if(tab){dashboardTab=tab.dataset.dashTab;render();return;}
   if(e.target.closest('[data-dash-location-edit]')){dashboardLocationEditing=true;render();return;}
