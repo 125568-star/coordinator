@@ -24,14 +24,17 @@ function viewAppointmentDetail(){
     weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'UTC'
   }).format(new Date(a.appt_date+'T12:00:00Z'));
   const time=a.appt_time ? clientAppointmentTime(a.appt_time) : 'Not specified';
-  const back='./dashboard.html?tab=clients&date='+encodeURIComponent(a.appt_date);
+  const fromClient=params.get('from')==='client' && fromDirectory && client;
+  const back=fromClient ?
+    './client.html?id='+encodeURIComponent(client.id)+'&date='+encodeURIComponent(a.appt_date) :
+    './dashboard.html?tab=clients&date='+encodeURIComponent(a.appt_date);
   const clientLink=fromDirectory&&client ?
     '<a class="ghost sm client-open" href="./client.html?id='+encodeURIComponent(client.id)+
     '&date='+encodeURIComponent(a.appt_date)+'">Client schedule</a>' : '';
   const note=typeof a.notes==='string'&&a.notes.trim()
     ? a.notes.trim() : 'No additional information has been recorded for this appointment yet.';
   return '<div class="bar"><h2>Appointment details</h2>'+
-      '<a class="ghost sm client-open" href="'+back+'">Back to Clients Dashboard</a></div>'+
+      '<a class="ghost sm client-open" href="'+back+'">'+(fromClient?'Back to Client':'Back to Clients Dashboard')+'</a></div>'+
     '<section class="client-week-card appointment-detail-card">'+
       '<div class="appointment-detail-head">'+avatar+
         '<div><h3>'+esc(clientName)+'</h3><p>Appointment record</p></div>'+
