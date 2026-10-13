@@ -108,3 +108,13 @@ dialog h2{font-size:1.25rem;color:var(--navy);margin-bottom:14px}
 .dash-source-links a{color:var(--blue)}
 .dash-no-events{padding:16px;color:var(--muted);background:var(--paper);border-radius:8px}
 @media(max-width:700px){.dash-calendar-layout{grid-template-columns:1fr}.dash-heading{flex-wrap:wrap}.dash-section{padding:16px}}
+
+/* Dashboard inner navigation and account-based location */
+.dash-inner-tabs{display:flex;gap:18px;border-bottom:1px solid var(--line);margin:-5px 0 22px}
+.dash-inner-tabs button{background:none;border:0;border-bottom:3px solid transparent;padding:9px 12px 10px;color:var(--muted);font-weight:700}
+.dash-inner-tabs button[aria-selected="true"]{color:var(--navy);border-bottom-color:var(--blue)}
+button.dash-location{background:var(--white);cursor:pointer;color:var(--blue)}
+.dash-location-form{display:flex;gap:8px;align-items:end;flex-wrap:wrap}
+.dash-location-form label{font-size:.8rem;min-width:130px}
+.dash-location-form input,.dash-location-form select{padding:5px 9px;font-size:.9rem}
+@media(max-width:700px){.dash-location-form{width:100%}.dash-location-form label{flex:1}}
