@@ -223,7 +223,6 @@ function dashboardWeeklyClients(today){
       '<span class="client-week-count">'+(count?count+' appt'+(count===1?'':'s'):'—')+'</span></button>';
   }).join('');
   const selectedAppointments=appointments.filter(a=>a.appt_date===dashboardSelectedDate);
-  const selectedDay=days.find(d=>iso(d)===dashboardSelectedDate);
   const rows=selectedAppointments.map(a=>{
     const avatar=a.client&&typeof clientAvatar==='function'?clientAvatar(a.client):
       '<span class="client-avatar client-initials" aria-hidden="true">'+esc(a.clientName.slice(0,1))+'</span>';
@@ -243,7 +242,7 @@ function dashboardWeeklyClients(today){
       '<span class="chip approved">'+selectedAppointments.length+' appointment'+(selectedAppointments.length===1?'':'s')+'</span></div>'+
     (selectedAppointments.length?'<div class="scroll"><table class="client-appointments-table dash-all-clients-table">'+
       '<thead><tr><th>Date</th><th>Time</th><th>Client</th><th>Appointment</th><th>Status</th></tr></thead>'+
-      '<tbody>'+rows+'</tbody></table></div>':'<div class="empty">No appointments for this week.</div>')+
+      '<tbody>'+rows+'</tbody></table></div>':'<div class="empty">No appointments for this day.</div>')+
     '</div>';
 }
 
