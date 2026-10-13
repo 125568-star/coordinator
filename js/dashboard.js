@@ -96,8 +96,9 @@ const SYDNEY_EVENTS = [
   url:'https://whatson.cityofsydney.nsw.gov.au/suburbs/sydney'}
 ];
 let dashboardPrefs = {...LOCATION_DEFAULT};
-let dashboardTab = 'general';
-let dashboardSelectedDate = null;
+const dashboardInitialParams = new URLSearchParams(location.search);
+let dashboardTab = location.pathname.endsWith('/dashboard.html') && dashboardInitialParams.get('tab')==='clients' ? 'clients' : 'general';
+let dashboardSelectedDate = location.pathname.endsWith('/dashboard.html') && /^\d{4}-\d{2}-\d{2}$/.test(dashboardInitialParams.get('date')||'') ? dashboardInitialParams.get('date') : null;
 let dashboardGeneralSelectedDate = null;
 let dashboardLocationEditing = false;
 let dashboardPrefError = '';
@@ -217,10 +218,10 @@ function dashboardWeeklyClients(today){
   };
   const directory=(D.recordAppts||[]).filter(a=>a.appt_date>=start&&a.appt_date<=end).map(a=>{
     const client=(D.clientRecords||[]).find(c=>c.id===a.client_record_id);
-    return {...a,clientName:client?.full_name||'Client',client,link:'./client.html?id='+encodeURIComponent(a.client_record_id)+'&date='+encodeURIComponent(a.appt_date)};
+    return {...a,clientName:client?.full_name||'Client',client,link:'./appointment.html?kind=record&id='+encodeURIComponent(a.id)};
   });
   const loginClients=(typeof myAppts==='function'?myAppts():[]).filter(a=>a.appt_date>=start&&a.appt_date<=end).map(a=>({
-    ...a,clientName:nameOf(a.client_id),client:null,appt_time:null,link:'./calendar.html',is_example:false
+    ...a,clientName:nameOf(a.client_id),client:null,appt_time:null,link:'./appointment.html?kind=account&id='+encodeURIComponent(a.id),is_example:false
   }));
   const appointments=[...directory,...loginClients].sort((a,b)=>
     a.appt_date.localeCompare(b.appt_date)||
@@ -240,12 +241,13 @@ function dashboardWeeklyClients(today){
   const rows=selectedAppointments.map(a=>{
     const avatar=a.client&&typeof clientAvatar==='function'?clientAvatar(a.client):
       '<span class="client-avatar client-initials" aria-hidden="true">'+esc(a.clientName.slice(0,1))+'</span>';
-    return '<tr><td>'+esc(shortDate(a.appt_date))+'</td>'+
-      '<td>'+esc(formatTime(a.appt_time))+'</td>'+
-      '<td><a class="dash-client-table-link" href="'+esc(a.link)+'">'+avatar+
-        '<strong>'+esc(a.clientName)+'</strong></a></td>'+
-      '<td><strong>'+esc(a.title)+'</strong></td>'+
-      '<td>'+(a.is_example?'<span class="chip pending">Example</span>':'<span class="chip approved">Scheduled</span>')+'</td></tr>';
+    const time=formatTime(a.appt_time);
+    return '<tr class="dash-appointment-row" role="link" tabindex="0" data-dash-appointment-href="'+esc(a.link)+'"'+
+      ' aria-label="Open '+esc(a.title)+' for '+esc(a.clientName)+', '+esc(time)+'">'+
+      '<td><span class="dash-appointment-client">'+avatar+'<strong>'+esc(a.clientName)+'</strong></span></td>'+
+      '<td><strong class="dash-appointment-title">'+esc(a.title)+'</strong>'+
+        (a.is_example?'<span class="dash-appointment-example">Example</span>':'')+'</td>'+
+      '<td class="dash-appointment-time">'+esc(time)+'</td></tr>';
   }).join('');
   return '<div class="dash-weekly-clients" role="tabpanel">'+
     '<div class="client-week-heading"><div><h3>This week</h3><p class="hint">'+
@@ -255,7 +257,7 @@ function dashboardWeeklyClients(today){
     '<div class="client-appointments-heading"><h3>Appointments — '+esc(shortDate(dashboardSelectedDate))+'</h3>'+
       '<span class="chip approved">'+selectedAppointments.length+' appointment'+(selectedAppointments.length===1?'':'s')+'</span></div>'+
     (selectedAppointments.length?'<div class="scroll"><table class="client-appointments-table dash-all-clients-table">'+
-      '<thead><tr><th>Date</th><th>Time</th><th>Client</th><th>Appointment</th><th>Status</th></tr></thead>'+
+      '<thead><tr><th>Client</th><th>Appointment</th><th>Time</th></tr></thead>'+
       '<tbody>'+rows+'</tbody></table></div>':'<div class="empty">No appointments for this day.</div>')+
     '</div>';
 }
@@ -303,6 +305,8 @@ function viewDashboard(){
     '</section>';
 }
 document.addEventListener('click',e=>{
+  const apptRow=e.target.closest('[data-dash-appointment-href]');
+  if(apptRow){location.assign(apptRow.dataset.dashAppointmentHref);return;}
   const generalDate=e.target.closest('[data-dash-general-date]');
   if(generalDate){
     dashboardGeneralSelectedDate=generalDate.dataset.dashGeneralDate;
@@ -320,4 +324,13 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('submit',e=>{
   if(e.target.id==='dashboard-location-form'){e.preventDefault();saveDashboardLocation(e.target);}
+});
+
+/* Appointment rows also open with Enter or Space for keyboard users. */
+document.addEventListener('keydown',e=>{
+  const row=e.target.closest('[data-dash-appointment-href]');
+  if(row && (e.key==='Enter'||e.key===' ')){
+    e.preventDefault();
+    location.assign(row.dataset.dashAppointmentHref);
+  }
 });
