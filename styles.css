@@ -137,3 +137,41 @@ a.client-open{display:inline-flex;align-items:center;text-decoration:none}
 .client-appointments-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:26px 0 12px}
 .client-appointments-table{min-width:560px}
 @media(max-width:600px){.client-week-card{padding:14px}.client-week-grid{gap:3px}.client-week-day{padding:8px 1px}.client-week-day strong{font-size:1rem}.client-week-count{font-size:.57rem}.client-profile-heading .ghost{margin-left:0}}
+
+/* Dashboard > Clients: current Monday–Sunday appointment agenda */
+.dash-week-summary{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.dash-week-summary h4{font-size:1.08rem;color:var(--navy);margin:0}
+.dash-week-summary strong{font-size:.88rem;color:var(--muted)}
+.dash-week-strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin:4px 0 24px}
+.dash-week-strip-day{display:flex;align-items:center;flex-direction:column;gap:3px;padding:11px 2px;background:var(--paper);border:1px solid var(--line);border-radius:9px}
+.dash-week-strip-day small{font-size:.75rem;color:var(--muted)}
+.dash-week-strip-day strong{font-size:1.25rem}
+.dash-week-strip-day span{font-size:.68rem;color:var(--muted);white-space:nowrap}
+.dash-week-strip-today{border:2px solid var(--blue);background:var(--off-bg)}
+.dash-weekly-agenda{display:grid;gap:14px}
+.dash-agenda-day{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.dash-agenda-day.dash-agenda-today{border-color:var(--blue)}
+.dash-agenda-day-head{display:flex;align-items:center;gap:10px;background:var(--paper);padding:10px 14px}
+.dash-agenda-day-head h4{font-size:.99rem;margin:0;color:var(--navy)}
+.dash-agenda-day-head h4 span{font-weight:400;color:var(--muted)}
+.dash-agenda-day-head>small{margin-left:auto;color:var(--muted);font-size:.79rem;white-space:nowrap}
+.dash-agenda-today-label{font-size:.72rem;padding:2px 7px;background:var(--off-bg);color:var(--navy);border-radius:10px;font-weight:700}
+.dash-agenda-appointments{display:grid}
+.dash-agenda-appointment{display:flex;gap:12px;align-items:center;padding:11px 14px;text-decoration:none;color:var(--ink);border-top:1px solid var(--line)}
+.dash-agenda-appointment:hover{background:var(--paper)}
+.dash-agenda-appointment .client-avatar{width:39px;height:39px}
+.dash-agenda-details{display:flex;flex-direction:column;gap:1px;flex:1;min-width:0}
+.dash-agenda-details>strong{color:var(--navy);font-size:.94rem}
+.dash-agenda-details>span{color:var(--muted);font-size:.86rem}
+.dash-agenda-time{font-size:.85rem;white-space:nowrap;color:var(--ink)}
+.dash-example-label{font-size:.77rem;color:var(--muted)}
+.dash-agenda-empty{color:var(--muted);font-size:.86rem;padding:12px 14px}
+@media(max-width:600px){
+ .dash-week-strip{gap:3px}
+ .dash-week-strip-day{padding:9px 1px}
+ .dash-week-strip-day strong{font-size:1rem}
+ .dash-week-strip-day span{font-size:.53rem}
+ .dash-agenda-day-head h4{font-size:.89rem}
+ .dash-agenda-appointment{gap:9px;padding:10px}
+ .dash-agenda-time{font-size:.74rem}
+}
