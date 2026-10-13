@@ -128,7 +128,7 @@ function render(){
     <button class="ghost sm" data-act="signout">Sign out</button></div></header>
     ${isCoord() && (pr || pu) ? `<div class="banner">${pr ? `<button class="link" data-tab="requests"><strong>${pr} request${pr>1?'s':''} to review</strong></button>` : ''}${pu ? `<button class="link" data-tab="people"><strong>${pu} ${pu>1?'people':'person'} waiting for approval</strong></button>` : ''}</div>` : ''}
     <nav class="tabs" aria-label="Sections">${tabsFor().map(([k,l,c]) => `<a href="./${TAB_PATH[k]}"${k===tab?' aria-current="page"':''}>${l}${c ? `<span class="count">${c}</span>` : ''}</a>`).join('')}</nav>
-    <main>${loadErrs.length ? `<div class="errbox">Some data could not be loaded:<br>${loadErrs.map(esc).join('<br>')}</div>` : ''}${{dashboard:viewDashboard, appointments:viewAppts, requests:viewReqs, clients:viewClients, people:viewPeople, companies:viewCompanies}[tab]()}</main>`;
+    <main>${loadErrs.length ? `<div class="errbox">Some data could not be loaded:<br>${loadErrs.map(esc).join('<br>')}</div>` : ''}${location.pathname.endsWith("/appointment.html") ? viewAppointmentDetail() : {dashboard:viewDashboard, appointments:viewAppts, requests:viewReqs, clients:viewClients, people:viewPeople, companies:viewCompanies}[tab]()}</main>`;
 }
 
 /* ----- which clients can the current view see? ----- */
