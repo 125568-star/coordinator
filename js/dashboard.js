@@ -370,6 +370,7 @@ document.addEventListener('keydown',e=>{
       return;
     }
     if(!me)return;
+    if(!isCoord()){tab='dashboard';baseRender();return;}
     const saved=tab;
     tab='dashboard';
     try{baseRender();}finally{tab=saved;}
